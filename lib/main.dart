@@ -70,6 +70,8 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void makeTest({required int? problemCount}) {
+  List<int> makeTest({required int? problemCount}) {
+    final shuffled = List<int>.from(voca)..shuffle();
+    return shuffled.take(problemCount ?? this.problemCount).toList();
   }
 }

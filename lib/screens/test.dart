@@ -13,7 +13,17 @@ class _TestState extends State<Test> {
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)!.settings.arguments as TestArgs;
-    return const Placeholder();
+    final List<int> testList = AppState().makeTest(problemCount: args.problemCount);
+    return Column(
+      children: [
+        //문제 부분
+        // ConstrainedBox(
+        //   constraints: BoxConstraints(maxHeight: 200),
+        //   child: 
+        // )
+        //선지 부분
+      ],
+    );
   }
 }
 

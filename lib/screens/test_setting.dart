@@ -183,7 +183,6 @@ class _TestSettingState extends State<TestSetting> {
               );
               return;
             }
-            AppState().makeTest(problemCount: _selectedCount);
             Navigator.pushNamed(
               context, 
               '/test',

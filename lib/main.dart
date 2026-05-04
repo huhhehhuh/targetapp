@@ -34,7 +34,7 @@ class AppState extends ChangeNotifier {
   int problemCount = 10;
   int grade = 2;
   List<int> targetVoca = [];
-  List<int> voca = [];
+  List<List<int>> voca = [];
   List<int> favorites = [];
   List<int> wrong = [];
 }

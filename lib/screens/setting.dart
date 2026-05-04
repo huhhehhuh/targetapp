@@ -28,6 +28,7 @@ class _SettingState extends State<Setting> {
                   .toList(),
               onChanged: (value) {
                 setState(() => _selectedGrade = value);
+                
               },
             ),
           ],

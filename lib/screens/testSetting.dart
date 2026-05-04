@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
+// import 'package:flutter/widget_previews.dart';
 import 'package:targetapp/main.dart';
 
 class TestSetting extends StatefulWidget {

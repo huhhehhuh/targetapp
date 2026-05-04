@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/home.dart';
-import 'screens/testSetting.dart';
+import 'screens/test_setting.dart';
 import 'screens/setting.dart';
 
 void main() {

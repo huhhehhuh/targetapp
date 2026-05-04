@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-// import 'package:flutter/widget_previews.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:targetapp/main.dart';
 
 class TestSetting extends StatefulWidget {
+  @Preview()
   const TestSetting({super.key});
 
   @override
@@ -154,30 +155,36 @@ class _TestSettingState extends State<TestSetting> {
           ),
 
           SizedBox(height: 40),
-          SizedBox(
-            width: 200,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () {
-                if (_dropDownFirst == _dropDownLatter) {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text('오류'),
-                      content: Text('문제 유형과 선지가 같을 수 없어요.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('확인'),
-                        ),
-                      ],
-                    ),
-                  );
-                  return;
-                }
-              },
-              child: Text('시작'),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.yellow,
+              foregroundColor: Colors.black,
+              textStyle: TextStyle(fontSize: 18),
+              fixedSize: Size(300, 50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(width: 2),
+              ),
             ),
+            onPressed: () {
+              if (_dropDownFirst == _dropDownLatter) {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text('오류'),
+                    content: Text('문제 유형과 선지가 같을 수 없어요.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('확인'),
+                      ),
+                    ],
+                  ),
+                );
+                return;
+              }
+            },
+            child: Text('시작'),
           ),
         ],
     );

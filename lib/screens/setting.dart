@@ -193,7 +193,7 @@ class _SettingState extends State<Setting> {
             fixedSize: Size(300, 50),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
-              side: BorderSide(width: 500),
+              side: BorderSide(width: 2),
             ),
           ),
           onPressed: () {
@@ -282,7 +282,7 @@ class _SettingState extends State<Setting> {
             fixedSize: Size(300, 50),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
-              side: BorderSide(width: 500),
+              side: BorderSide(width: 2),
             ),
           ),
           child: Text('즐겨찾기 초기화', style: TextStyle(fontSize: 16)),

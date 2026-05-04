@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import 'screens/home.dart';
 import 'screens/test_setting.dart';
 import 'screens/setting.dart';
+import 'assets/target_voca_list.dart';
+import 'assets/test_domain.dart';
+import 'screens/test.dart';
 
 void main() {
   runApp(const TargetApp());
@@ -21,6 +24,7 @@ class TargetApp extends StatelessWidget {
           '/': (context) => const Home(),
           '/testsetting': (context) => const TestSetting(),
           '/setting': (context) => const Setting(),
+          '/test': (context) => const Test(),
         },
       ),
     );
@@ -30,11 +34,10 @@ class TargetApp extends StatelessWidget {
 class AppState extends ChangeNotifier {
   String problemForm = '한글단어';
   String answerForm = '영단어';
-  bool isMultipleChoice = true;
+  bool isMultipleChoice = false;
   int problemCount = 10;
   int grade = 2;
-  List<int> targetVoca = [];
-  List<List<int>> voca = [];
+  List<int> voca = testDomain[1]; //얘는 int로 번호만 저장되어 있음
   List<int> favorites = [];
   List<int> wrong = [];
 
@@ -48,6 +51,7 @@ class AppState extends ChangeNotifier {
     wrong = [];
   }
 
+  //설정 저장 함수
   void saveSettings({
     required int? grade,
     required String? problemForm,
@@ -55,11 +59,17 @@ class AppState extends ChangeNotifier {
     required bool isMultipleChoice,
     required int problemCount,
   }) {
+    if (this.grade != grade) {
+      voca = testDomain[this.grade];
+    }
     this.grade = grade ?? this.grade;
     this.problemForm = problemForm ?? this.problemForm;
     this.answerForm = answerForm ?? this.answerForm;
     this.isMultipleChoice = isMultipleChoice;
     this.problemCount = problemCount;
     notifyListeners();
+  }
+
+  void makeTest({required int? problemCount}) {
   }
 }

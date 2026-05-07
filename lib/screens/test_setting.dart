@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:targetapp/main.dart';
 import 'test.dart';
+import 'package:provider/provider.dart';
 
 class TestSetting extends StatefulWidget {
   @Preview()
@@ -12,11 +13,21 @@ class TestSetting extends StatefulWidget {
 }
 
 class _TestSettingState extends State<TestSetting> {
-  String? _dropDownFirst = AppState().problemForm;
-  String? _dropDownLatter = AppState().answerForm;
-  bool _isMultipleChoice = AppState().isMultipleChoice;
-  int _selectedCount = AppState().problemCount;
+  late String? _dropDownFirst;
+  late String? _dropDownLatter;
+  late bool _isMultipleChoice;
+  late int _selectedCount;
   final List<int> _counts = [10, 30, 50, 80, 100, 200, 300, 400];
+
+  @override
+  void initState() {
+    super.initState();
+    final appState = Provider.of<AppState>(context, listen: false);
+    _dropDownFirst = appState.problemForm;
+    _dropDownLatter = appState.answerForm;
+    _isMultipleChoice = appState.isMultipleChoice;
+    _selectedCount = appState.problemCount;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +49,7 @@ class _TestSettingState extends State<TestSetting> {
           
                   //첫 번째 드롭다운
                   Container(
-                    width: 100,
+                    width: 110,
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.black, width: 1),
@@ -60,15 +71,15 @@ class _TestSettingState extends State<TestSetting> {
                       },
                     ),
                   ),
-                  SizedBox(width: 30),
+                  SizedBox(width: 15),
                   Icon(Icons.arrow_forward_ios, size: 16),
-                  SizedBox(width: 30),
-                  Text('선지:'),
+                  SizedBox(width: 15),
+                  Text('답안:'),
                   SizedBox(width: 10),
           
                   //두번째 드롭다운
                   Container(
-                    width: 100,
+                    width: 110,
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.black, width: 1),
@@ -93,9 +104,9 @@ class _TestSettingState extends State<TestSetting> {
               //객관식/주관식
               ToggleButtons(
                 borderRadius: BorderRadius.circular(20),
-                isSelected: [_isMultipleChoice, !_isMultipleChoice],
+                isSelected: [!_isMultipleChoice, _isMultipleChoice],
                 onPressed: (index) {
-                  setState(() => _isMultipleChoice = (index == 0));
+                  setState(() => _isMultipleChoice = (index != 0));
                 },
                 children: ['객관식', '주관식']
                     .map(
@@ -107,7 +118,7 @@ class _TestSettingState extends State<TestSetting> {
                     .toList(),
               ),
           
-              SizedBox(height: 80),
+              SizedBox(height: 50),
           
               //문제수 설정
               Text('문제 수 설정', style: TextStyle(fontSize: 24)),
@@ -118,43 +129,45 @@ class _TestSettingState extends State<TestSetting> {
                   Column(
                     children: [
                       //윗줄 4개(10개, 30개, 50개, 80개)
-                      SizedBox(
-                        width: 380,
-                        child: ToggleButtons(
-                          constraints: BoxConstraints(maxWidth: 90, minHeight: 40),
-                          isSelected: _counts
-                              .sublist(0, 4)
-                              .map((e) => (e == _selectedCount))
-                              .toList(),
-                          onPressed: (index) {
-                            setState(() => _selectedCount = _counts[index]);
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          children: _counts
-                              .sublist(0, 4)
-                              .map((e) => Text('$e개'))
-                              .toList(),
+                      ToggleButtons(
+                        constraints: BoxConstraints(
+                          maxWidth: 80, 
+                          minWidth: 80,
+                          minHeight: 40
                         ),
+                        isSelected: _counts
+                            .sublist(0, 4)
+                            .map((e) => (e == _selectedCount))
+                            .toList(),
+                        onPressed: (index) {
+                          setState(() => _selectedCount = _counts[index]);
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        children: _counts
+                            .sublist(0, 4)
+                            .map((e) => Text('$e개'))
+                            .toList(),
                       ),
           
                       //아랫줄 4개(100개, 200개, 300개, 400개)
-                      SizedBox(
-                        width: 380,
-                        child: ToggleButtons(
-                          constraints: BoxConstraints(maxWidth: 90, minHeight: 40),
-                          isSelected: _counts
-                              .sublist(4, 8)
-                              .map((e) => (e == _selectedCount))
-                              .toList(),
-                          onPressed: (index) {
-                            setState(() => _selectedCount = _counts[index + 4]);
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          children: _counts
-                              .sublist(4, 8)
-                              .map((e) => Text('$e개'))
-                              .toList(),
+                      ToggleButtons(
+                        constraints: BoxConstraints(
+                          maxWidth: 80, 
+                          minWidth: 80,
+                          minHeight: 40
                         ),
+                        isSelected: _counts
+                            .sublist(4, 8)
+                            .map((e) => (e == _selectedCount))
+                            .toList(),
+                        onPressed: (index) {
+                          setState(() => _selectedCount = _counts[index + 4]);
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        children: _counts
+                            .sublist(4, 8)
+                            .map((e) => Text('$e개'))
+                            .toList(),
                       ),
                     ],
                   ),
@@ -171,7 +184,7 @@ class _TestSettingState extends State<TestSetting> {
                   fixedSize: Size(300, 50),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(width: 2),
+                    // side: BorderSide(width: 2),
                   ),
                 ),
                 onPressed: () {
@@ -195,10 +208,12 @@ class _TestSettingState extends State<TestSetting> {
                     context, 
                     '/test',
                     arguments: TestArgs(
+                      title: '시험',
                       problemForm: _dropDownFirst!,
                       answerForm: _dropDownLatter!,
                       isMultipleChoice: _isMultipleChoice,
                       problemCount: _selectedCount,
+                      testList: Provider.of<AppState>(context, listen: false).makeTest(problemCount: _selectedCount),
                     ),
                   );
                 },

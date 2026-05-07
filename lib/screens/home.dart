@@ -64,7 +64,7 @@ class Home extends StatelessWidget {
                         borderRadius: BorderRadius.circular(24),
                       ),
                     ),
-                    onPressed: () => Navigator.pushNamed(context, '/test'),
+                    onPressed: () => Navigator.pushNamed(context, '/testsetting'),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

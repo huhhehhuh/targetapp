@@ -3,6 +3,7 @@ import 'package:flutter/widget_previews.dart';
 import 'package:targetapp/main.dart';
 import '../assets/target_voca_list.dart';
 import 'package:provider/provider.dart';
+import 'dart:math';
 
 class Test extends StatefulWidget {
   @Preview()
@@ -19,60 +20,117 @@ class _TestState extends State<Test> {
         (throw ArgumentError('Invalid field: $format'));
   }
 
-@override
-void initState() {// 화면이 처음 로드될 때 Provider 초기화
-  super.initState();
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    final args = ModalRoute.of(context)!.settings.arguments as TestArgs;
-    context.read<TestProvider>().initTest(args.problemCount);
-  });
-}
+  late int _problemNumber; //문제번호(problemCount는 총 문제수)
+  late int _totalCount;
+  late List<int> _wrongs;
+  late List<int> _options;
+  int? _selectedOption;
 
-@override
-Widget build(BuildContext context) {
-  final args = ModalRoute.of(context)!.settings.arguments as TestArgs;
-  final testProv = context.watch<TestProvider>();
-  
-  if (testProv.testList.isEmpty) return CircularProgressIndicator();
+  @override
+  void initState() {
+    super.initState();
+    final appState = Provider.of<AppState>(context, listen: false);
+    _problemNumber = 1;
+    _totalCount = appState.problemCount;
+    _wrongs = [];
+    _options = [];
+    _selectedOption = null;
+  }
 
-    // 시험 종료 시 결과 페이지로 이동하거나 메시지 표시
-    if (testProv.isFinished) {
-      //결과 페이지 이동 로직
+  void makeOptions({required int vocaNumber}) {
+    _selectedOption = null;
+    var random = Random();
+    Set<int> optionsSet = {vocaNumber};
+    while (optionsSet.length < 5) {
+      optionsSet.add(random.nextInt(vocaLength-1)+1);
     }
+    _options = optionsSet.toList();
+    _options.shuffle();
+  }
 
-    final currentVocab = targetVoca[testProv.testList[testProv.problemNumber - 1]];
+  void nextProblem() {
+    //다음 문제
+    if (_problemNumber < _totalCount) {
+      setState(() {
+        _problemNumber++;
+      });
+    } else {
+      //시험 종료
+      Navigator.pushNamed(context, '/result');
+    }
+  }
+
+  void grading() {
+    //채점
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)!.settings.arguments as TestArgs;
+    final currentVocab = targetVoca[args.testList[_problemNumber - 1]];
 
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              Text(
+                '${args.title}',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 10),
               // 문제 부분
               ConstrainedBox(
                 constraints: BoxConstraints(maxHeight: 200),
                 child: Text(
-                  '${testProv.problemNumber}. ${currentVocab[trans(args.problemForm)]}',
+                  '$_problemNumber. ${currentVocab[trans(args.problemForm)]}',
                 ),
               ),
-              
-              // 선지 부분
+
+              // 선지 부분 -> 상세 구현은 나중에. 일단은 문제 부분만 구현해놓고 선지는 다음 단계에서.
               if (!args.isMultipleChoice) //객관식
                 Column(
                   children: [
-                    for (int i = 0; i < 4; i++)
-                      ElevatedButton(
-                        onPressed: () { /* 정답 체크 로직 */ },
-                        child: Text(currentVocab[trans(args.answerForm)]),
+                    ToggleButtons(
+                      constraints: BoxConstraints(
+                        maxWidth: 100,
+                        minWidth: 100,
+                        maxHeight: 40,
                       ),
+                      isSelected: List.generate(
+                        5, (i) => i == _selectedOption,
+                      ),
+                      onPressed: (int index) {
+                        setState(() {
+                          _selectedOption = index;
+                        });
+                      },
+                      children: _options
+                          .map(
+                            (i) => Text(
+                              targetVoca[args.testList[_options[i]]][trans(
+                                args.answerForm,
+                              )],
+                            ),
+                          )
+                          .toList(),
+                    ),
                   ],
                 )
               else //주관식
                 Column(children: [TextField()]),
-          
+
               // 제출/다음 버튼
               ElevatedButton(
                 onPressed: () {
-                  testProv.nextProblem(args.problemCount);
+                  grading();
+                  nextProblem();
+                  if (!args.isMultipleChoice) {
+                    makeOptions(vocaNumber: args.testList[_problemNumber - 1]);
+                  } else {
+                    //주관식일때 문제 및 정답 갱신
+                  }
                 },
                 child: Text('다음'),
               ),
@@ -89,38 +147,15 @@ class TestArgs {
   final String answerForm;
   final bool isMultipleChoice;
   final int problemCount;
+  final List<int> testList;
+  final String title;
 
   TestArgs({
+    required this.title,
     required this.problemForm,
     required this.answerForm,
     required this.isMultipleChoice,
     required this.problemCount,
+    required this.testList,
   });
-}
-
-class TestProvider with ChangeNotifier {
-  int _problemNumber = 1;
-  late List<int> _testList;
-  bool _isFinished = false;
-
-  int get problemNumber => _problemNumber;
-  List<int> get testList => _testList;
-  bool get isFinished => _isFinished;
-
-  // 초기화: AppState에서 시험 리스트를 받아옴
-  void initTest(int count) {
-    _testList = AppState().makeTest(problemCount: count);
-    _problemNumber = 1;
-    _isFinished = false;
-  }
-
-  void nextProblem(int totalCount) {
-    if (_problemNumber < totalCount) {
-      _problemNumber++;
-      notifyListeners(); // 화면 업데이트 요청
-    } else {
-      _isFinished = true;
-      notifyListeners();
-    }
-  }
 }

@@ -3,13 +3,19 @@ import 'package:provider/provider.dart';
 import 'screens/home.dart';
 import 'screens/test_setting.dart';
 import 'screens/setting.dart';
-import 'assets/target_voca_list.dart';
 import 'assets/test_domain.dart';
 import 'screens/test.dart';
+import 'screens/result.dart';
 
 void main() {
-  runApp(const TargetApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AppState(),
+      child: TargetApp(),
+    ),
+  );
 }
+//주관식에서는 답안 양식에 영단어 이외로 선택하면 경고메시지
 
 class TargetApp extends StatelessWidget {
   const TargetApp({super.key});
@@ -25,6 +31,7 @@ class TargetApp extends StatelessWidget {
           '/testsetting': (context) => const TestSetting(),
           '/setting': (context) => const Setting(),
           '/test': (context) => const Test(),
+          '/result': (context) => const Result(),
         },
       ),
     );
@@ -37,7 +44,8 @@ class AppState extends ChangeNotifier {
   bool isMultipleChoice = false;
   int problemCount = 10;
   int grade = 2;
-  List<int> voca = testDomain[1]; //얘는 int로 번호만 저장되어 있음
+  List<int> voca =
+      testDomain[2]; //얘는 int로 번호만 저장되어 있음. 근데 내가 testDomain에서 0번 인덱스를 비워놔서 1-based.
   List<int> favorites = [];
   List<int> wrong = [];
 

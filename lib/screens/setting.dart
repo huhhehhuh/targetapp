@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:targetapp/main.dart';
 import 'package:provider/provider.dart';
 
 class Setting extends StatefulWidget {
-  @Preview()
   const Setting({super.key});
 
   @override
@@ -49,7 +47,10 @@ class _SettingState extends State<Setting> {
                     value: _selectedGrade,
                     items: [1, 2, 3]
                         .map(
-                          (e) => DropdownMenuItem<int>(value: e, child: Text('$e학년')),
+                          (e) => DropdownMenuItem<int>(
+                            value: e,
+                            child: Text('$e학년'),
+                          ),
                         )
                         .toList(),
                     onChanged: (value) {
@@ -58,7 +59,7 @@ class _SettingState extends State<Setting> {
                   ),
                 ],
               ),
-          
+
               SizedBox(height: 30),
               Text('기본 세팅 설정', style: TextStyle(fontSize: 16)),
               SizedBox(height: 10),
@@ -71,7 +72,7 @@ class _SettingState extends State<Setting> {
                     children: [
                       Text('문제:'),
                       SizedBox(width: 10),
-          
+
                       //첫 번째 드롭다운
                       Container(
                         width: 110,
@@ -90,14 +91,19 @@ class _SettingState extends State<Setting> {
                           //       ),
                           //     )
                           //     .toList(),
-                          items: ['한글단어', '영단어', '영영풀이'] //지금은 beta1버전이라서 문장은 없이 하고 나중에 바꿈.
-                              .map(
-                                (e) => DropdownMenuItem<String>(
-                                  value: e,
-                                  child: Text(e),
-                                ),
-                              )
-                              .toList(),
+                          items:
+                              [
+                                    '한글단어',
+                                    '영단어',
+                                    '영영풀이',
+                                  ] //지금은 beta1버전이라서 문장은 없이 하고 나중에 바꿈.
+                                  .map(
+                                    (e) => DropdownMenuItem<String>(
+                                      value: e,
+                                      child: Text(e),
+                                    ),
+                                  )
+                                  .toList(),
                           onChanged: (value) {
                             setState(() => _dropDownProblem = value);
                           },
@@ -108,7 +114,7 @@ class _SettingState extends State<Setting> {
                       SizedBox(width: 15),
                       Text('답안:'),
                       SizedBox(width: 10),
-          
+
                       //두번째 드롭다운
                       Container(
                         width: 110,
@@ -136,14 +142,14 @@ class _SettingState extends State<Setting> {
                   ),
                 ],
               ),
-          
+
               SizedBox(height: 20),
               //객관식/주관식
               ToggleButtons(
                 borderRadius: BorderRadius.circular(20),
-                isSelected: [!_isMultipleChoice, _isMultipleChoice],
+                isSelected: [_isMultipleChoice, !_isMultipleChoice],
                 onPressed: (index) {
-                  setState(() => _isMultipleChoice = (index != 0));
+                  setState(() => _isMultipleChoice = (index == 0));
                 },
                 children: ['객관식', '주관식']
                     .map(
@@ -154,7 +160,7 @@ class _SettingState extends State<Setting> {
                     )
                     .toList(),
               ),
-          
+
               SizedBox(height: 30),
               //문제수 설정
               Text('문제 수', style: TextStyle(fontSize: 16)),
@@ -168,9 +174,9 @@ class _SettingState extends State<Setting> {
                       //윗줄 4개(10개, 30개, 50개, 80개)
                       ToggleButtons(
                         constraints: BoxConstraints(
-                          maxWidth: 80, 
+                          maxWidth: 80,
                           minWidth: 80,
-                          minHeight: 40
+                          minHeight: 40,
                         ),
                         isSelected: _counts
                             .sublist(0, 4)
@@ -185,11 +191,11 @@ class _SettingState extends State<Setting> {
                             .map((e) => Text('$e개'))
                             .toList(),
                       ),
-          
+
                       //아랫줄 4개(100개, 200개, 300개, 400개)
                       ToggleButtons(
                         constraints: BoxConstraints(
-                          maxWidth: 80, 
+                          maxWidth: 80,
                           minWidth: 80,
                           minHeight: 40,
                         ),
@@ -210,7 +216,7 @@ class _SettingState extends State<Setting> {
                   ),
                 ],
               ),
-          
+
               SizedBox(height: 20),
               //설정 저장 버튼
               ElevatedButton(
@@ -224,28 +230,19 @@ class _SettingState extends State<Setting> {
                 ),
                 onPressed: () {
                   if (_dropDownProblem == _dropDownAnswer) {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text('오류'),
-                        titleTextStyle: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red,
-                        ),
-                        content: Text('문제와 선지의 유형이 같을 수 없어요.'),
-                        actions: [
-                          TextButton(
-                            style: TextButton.styleFrom(foregroundColor: Colors.red),
-                            onPressed: () => Navigator.pop(context),
-                            child: Text('확인'),
-                          ),
-                        ],
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('문제와 답안의 유형이 같을 수 없어요.'),
+                        duration: Duration(seconds: 2),
+
                       ),
                     );
                     return;
                   }
-                  final appState = Provider.of<AppState>(context, listen: false);
+                  final appState = Provider.of<AppState>(
+                    context,
+                    listen: false,
+                  );
                   appState.saveSettings(
                     grade: _selectedGrade,
                     problemForm: _dropDownProblem,
@@ -253,23 +250,17 @@ class _SettingState extends State<Setting> {
                     isMultipleChoice: _isMultipleChoice,
                     problemCount: _selectedCount,
                   );
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text('저장 완료'),
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
                       content: Text('설정이 저장되었어요.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('확인'),
-                        ),
-                      ],
+                      duration: Duration(seconds: 2),
                     ),
                   );
+                  Navigator.pushNamed(context, '/');
                 },
                 child: Text('저장', style: TextStyle(fontSize: 16)),
               ),
-          
+
               SizedBox(height: 30),
               //즐겨찾기 초기화
               ElevatedButton(
@@ -285,10 +276,15 @@ class _SettingState extends State<Setting> {
                           child: Text('취소'),
                         ),
                         TextButton(
-                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red,
+                          ),
                           onPressed: () {
                             Navigator.pop(context);
-                            final appState = Provider.of<AppState>(context, listen: false);
+                            final appState = Provider.of<AppState>(
+                              context,
+                              listen: false,
+                            );
                             appState.resetFavorites();
                           },
                           child: Text('확인'),
@@ -307,7 +303,7 @@ class _SettingState extends State<Setting> {
                 ),
                 child: Text('즐겨찾기 초기화', style: TextStyle(fontSize: 16)),
               ),
-          
+
               SizedBox(height: 10),
               //오답 초기화
               ElevatedButton(
@@ -323,10 +319,15 @@ class _SettingState extends State<Setting> {
                           child: Text('취소'),
                         ),
                         TextButton(
-                          style: TextButton.styleFrom(foregroundColor: Colors.red),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red,
+                          ),
                           onPressed: () {
                             Navigator.pop(context);
-                            final appState = Provider.of<AppState>(context, listen: false);
+                            final appState = Provider.of<AppState>(
+                              context,
+                              listen: false,
+                            );
                             appState.resetWrong();
                           },
                           child: Text('확인'),

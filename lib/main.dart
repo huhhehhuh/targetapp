@@ -5,6 +5,7 @@ import 'screens/test_setting.dart';
 import 'screens/setting.dart';
 import 'assets/test_domain.dart';
 import 'screens/test.dart';
+import 'screens/target_view.dart';
 import 'screens/result.dart';
 
 void main() {
@@ -31,6 +32,7 @@ class TargetApp extends StatelessWidget {
           '/testsetting': (context) => const TestSetting(),
           '/setting': (context) => const Setting(),
           '/test': (context) => const Test(),
+          '/targetview': (context) => const TargetView(),
           '/result': (context) => const Result(),
         },
       ),
@@ -82,4 +84,12 @@ class AppState extends ChangeNotifier {
     final shuffled = List<int>.from(voca)..shuffle();
     return shuffled.take(problemCount ?? this.problemCount).toList();
   }
+  void toggleFavorite(int wordNumber) { //즐겨찾기 기능
+  if (favorites.contains(wordNumber)) {
+    favorites.remove(wordNumber);
+  } else {
+    favorites.add(wordNumber);
+  }
+  notifyListeners();
+}
 }

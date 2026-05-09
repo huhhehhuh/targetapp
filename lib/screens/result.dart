@@ -70,7 +70,7 @@ class _ResultState extends State<Result> {
                 SizedBox(height: 10),
                 //시험 결과 내용
                 Text(
-                  '정답률 ${double.parse(_accuracy.toStringAsFixed(2))}%',
+                  '정답률 ${double.parse(_accuracy.toStringAsFixed(2))}%(${_args.correctCount}/${_args.totalCount})',
                   style: TextStyle(fontSize: 20),
                 ),
 

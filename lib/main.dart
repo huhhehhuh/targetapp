@@ -7,14 +7,10 @@ import 'assets/test_domain.dart';
 import 'screens/test.dart';
 import 'screens/target_view.dart';
 import 'screens/result.dart';
+import 'dart:math';
 
 void main() {
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => AppState(),
-      child: TargetApp(),
-    ),
-  );
+  runApp(ChangeNotifierProvider(create: (_) => AppState(), child: TargetApp()));
 }
 //주관식에서는 답안 양식에 영단어 이외로 선택하면 경고메시지
 
@@ -43,7 +39,7 @@ class TargetApp extends StatelessWidget {
 class AppState extends ChangeNotifier {
   String problemForm = '한글단어';
   String answerForm = '영단어';
-  bool isMultipleChoice = false;
+  bool isMultipleChoice = true;
   int problemCount = 10;
   int grade = 2;
   List<int> voca =
@@ -80,9 +76,38 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<int> makeTest({required int? problemCount}) {
-    final shuffled = List<int>.from(voca)..shuffle();
-    return shuffled.take(problemCount ?? this.problemCount).toList();
+  //문제 만들기
+  List<List<int>> makeTest({
+    required int problemCount,
+    required bool isMultipleChoice,
+    required List<int> testDomain,
+  }) {
+    if (!isMultipleChoice) {
+      //[문제번호]
+      final shuffled = List<int>.from(testDomain)..shuffle();
+      return shuffled.take(problemCount).map((e)=>[e]).toList();
+    } else {
+      //[문제번호, 선지1~5, 정답번호]
+      final shuffled = List<int>.from(testDomain)..shuffle();
+      final List<List<int>> problems = [];
+      for (int i = 0; i < problemCount; i++) {
+        int problemNumber = shuffled[i];
+        List<int> options = [problemNumber];
+        while (options.length < 5) {
+          int option = testDomain[Random().nextInt(testDomain.length)];
+          if (!options.contains(option)) {
+            options.add(option);
+          }
+        }
+        options.shuffle();
+        problems.add([
+          problemNumber,
+          ...options,
+          options.indexOf(problemNumber),
+        ]);
+      }
+      return problems;
+    }
   }
   void toggleFavorite(int wordNumber) { //즐겨찾기 기능
   if (favorites.contains(wordNumber)) {

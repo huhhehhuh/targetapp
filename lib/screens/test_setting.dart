@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:targetapp/main.dart';
 import 'test.dart';
 import 'package:provider/provider.dart';
 
 class TestSetting extends StatefulWidget {
-  @Preview()
   const TestSetting({super.key});
 
   @override
@@ -46,7 +44,7 @@ class _TestSettingState extends State<TestSetting> {
                 children: [
                   Text('문제:'),
                   SizedBox(width: 10),
-          
+
                   //첫 번째 드롭다운
                   Container(
                     width: 110,
@@ -62,11 +60,20 @@ class _TestSettingState extends State<TestSetting> {
                       //       (e) => DropdownMenuItem<String>(value: e, child: Text(e)),
                       //     )
                       //     .toList(),
-                      items: ['한글단어', '영단어', '영영풀이'] //지금은 beta1버전이라서 문장은 없이 하고 나중에 바꿈.
-                          .map(
-                            (e) => DropdownMenuItem<String>(value: e, child: Text(e)),
-                          )
-                          .toList(),                onChanged: (value) {
+                      items:
+                          [
+                                '한글단어',
+                                '영단어',
+                                '영영풀이',
+                              ] //지금은 beta1버전이라서 문장은 없이 하고 나중에 바꿈.
+                              .map(
+                                (e) => DropdownMenuItem<String>(
+                                  value: e,
+                                  child: Text(e),
+                                ),
+                              )
+                              .toList(),
+                      onChanged: (value) {
                         setState(() => _dropDownFirst = value);
                       },
                     ),
@@ -76,7 +83,7 @@ class _TestSettingState extends State<TestSetting> {
                   SizedBox(width: 15),
                   Text('답안:'),
                   SizedBox(width: 10),
-          
+
                   //두번째 드롭다운
                   Container(
                     width: 110,
@@ -87,9 +94,12 @@ class _TestSettingState extends State<TestSetting> {
                     ),
                     child: DropdownButtonFormField<String>(
                       initialValue: _dropDownLatter,
-                      items: ['한글단어', '영단어', '영영풀이']
+                      items: ['한글단어', '영단어']
                           .map(
-                            (e) => DropdownMenuItem<String>(value: e, child: Text(e)),
+                            (e) => DropdownMenuItem<String>(
+                              value: e,
+                              child: Text(e),
+                            ),
                           )
                           .toList(),
                       onChanged: (value) {
@@ -99,14 +109,14 @@ class _TestSettingState extends State<TestSetting> {
                   ),
                 ],
               ),
-          
+
               SizedBox(height: 10),
               //객관식/주관식
               ToggleButtons(
                 borderRadius: BorderRadius.circular(20),
-                isSelected: [!_isMultipleChoice, _isMultipleChoice],
+                isSelected: [_isMultipleChoice, !_isMultipleChoice],
                 onPressed: (index) {
-                  setState(() => _isMultipleChoice = (index != 0));
+                  setState(() => _isMultipleChoice = (index == 0));
                 },
                 children: ['객관식', '주관식']
                     .map(
@@ -117,9 +127,9 @@ class _TestSettingState extends State<TestSetting> {
                     )
                     .toList(),
               ),
-          
+
               SizedBox(height: 50),
-          
+
               //문제수 설정
               Text('문제 수 설정', style: TextStyle(fontSize: 24)),
               SizedBox(height: 10),
@@ -131,9 +141,9 @@ class _TestSettingState extends State<TestSetting> {
                       //윗줄 4개(10개, 30개, 50개, 80개)
                       ToggleButtons(
                         constraints: BoxConstraints(
-                          maxWidth: 80, 
+                          maxWidth: 80,
                           minWidth: 80,
-                          minHeight: 40
+                          minHeight: 40,
                         ),
                         isSelected: _counts
                             .sublist(0, 4)
@@ -148,13 +158,13 @@ class _TestSettingState extends State<TestSetting> {
                             .map((e) => Text('$e개'))
                             .toList(),
                       ),
-          
+
                       //아랫줄 4개(100개, 200개, 300개, 400개)
                       ToggleButtons(
                         constraints: BoxConstraints(
-                          maxWidth: 80, 
+                          maxWidth: 80,
                           minWidth: 80,
-                          minHeight: 40
+                          minHeight: 40,
                         ),
                         isSelected: _counts
                             .sublist(4, 8)
@@ -173,7 +183,7 @@ class _TestSettingState extends State<TestSetting> {
                   ),
                 ],
               ),
-          
+
               SizedBox(height: 40),
               //시작 버튼
               ElevatedButton(
@@ -188,11 +198,12 @@ class _TestSettingState extends State<TestSetting> {
                   ),
                 ),
                 onPressed: () {
+                  //예외 처리
                   if (_dropDownFirst == _dropDownLatter) {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: Text('오류'),
+                        title: Text('오류', style: TextStyle(color: Colors.red),),
                         content: Text('문제 유형과 선지가 같을 수 없어요.'),
                         actions: [
                           TextButton(
@@ -204,8 +215,26 @@ class _TestSettingState extends State<TestSetting> {
                     );
                     return;
                   }
+                  if (!_isMultipleChoice && _dropDownLatter != '영단어') {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('오류', style: TextStyle(color: Colors.red),),
+                        content: Text('주관식은 답안 유형이 영단어여야 해요.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('확인'),
+                          ),
+                        ],
+                      ),
+                    );
+                    return;
+                  }
+                  //주관식의 경우 answerform이 영단어 아니면 불가능하게
+
                   Navigator.pushNamed(
-                    context, 
+                    context,
                     '/test',
                     arguments: TestArgs(
                       title: '시험',
@@ -213,7 +242,15 @@ class _TestSettingState extends State<TestSetting> {
                       answerForm: _dropDownLatter!,
                       isMultipleChoice: _isMultipleChoice,
                       problemCount: _selectedCount,
-                      testList: Provider.of<AppState>(context, listen: false).makeTest(problemCount: _selectedCount),
+                      testNumber: 0,
+                      testList: Provider.of<AppState>(
+                        context,
+                        listen: false,
+                      ).makeTest(
+                        problemCount: _selectedCount, 
+                        isMultipleChoice: _isMultipleChoice,
+                        testDomain: Provider.of<AppState>(context, listen: false).voca,
+                      ),
                     ),
                   );
                 },

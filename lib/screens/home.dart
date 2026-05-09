@@ -132,7 +132,7 @@ class Home extends StatelessWidget {
                         Icon(Icons.dangerous, size: 32),
                         SizedBox(height: 5),
                         Text(
-                          '오답보기',
+                          '오답노트',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

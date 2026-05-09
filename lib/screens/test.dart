@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../assets/target_voca_list.dart';
 import 'package:targetapp/screens/result.dart';
+import 'package:provider/provider.dart';
+import 'package:targetapp/main.dart';
 
 class Test extends StatefulWidget {
   const Test({super.key});
@@ -10,6 +12,7 @@ class Test extends StatefulWidget {
 }
 
 class _TestState extends State<Test> {
+  late final appState;
   late TestArgs _args;
   final TextEditingController _answerController = TextEditingController();
   static const Map<String, int> _transFormat = {'한글단어': 3, '영단어': 2, '영영풀이': 4};
@@ -34,6 +37,7 @@ class _TestState extends State<Test> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    appState = Provider.of<AppState>(context, listen: false);
     _args = ModalRoute.of(context)!.settings.arguments as TestArgs;
     _totalCount = _args.problemCount;
     _problemNumber = 1;
@@ -73,10 +77,12 @@ class _TestState extends State<Test> {
     _args.testList.forEach((item) => debugPrint(item.toString()));
 
     return Scaffold(
-      appBar: AppBar(title: Text(
-                  '${_args.title}',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),),
+      appBar: AppBar(
+        title: Text(
+          '${_args.title}',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(
@@ -132,7 +138,7 @@ class _TestState extends State<Test> {
                   Column(
                     children: [
                       SizedBox(
-                        width : 400,
+                        width: 400,
                         child: TextField(
                           autofocus: true,
                           controller: _answerController,
@@ -160,8 +166,9 @@ class _TestState extends State<Test> {
                   ),
                   onPressed: () {
                     if (_args.isMultipleChoice) {
-                      if (_selectedOption == _args.testList[_problemNumber-1][6]) {
-                        setState(()=> _correctCount++);
+                      if (_selectedOption ==
+                          _args.testList[_problemNumber - 1][6]) {
+                        setState(() => _correctCount++);
                         //정답 유무에 따른 애니메이션 구현해야됨
                         // ScaffoldMessenger.of(context).showSnackBar(
                         //   SnackBar(content: Text('정답'), duration: Duration(milliseconds: 500)),
@@ -177,7 +184,8 @@ class _TestState extends State<Test> {
                       }
                     } else {
                       if (_answerController.text.trim() ==
-                          targetVoca[_args.testList[_problemNumber - 1][0]][trans(_args.answerForm)]) {
+                          targetVoca[_args.testList[_problemNumber -
+                              1][0]][trans(_args.answerForm)]) {
                         setState(() => _correctCount++);
                         // ScaffoldMessenger.of(context).showSnackBar(
                         //   SnackBar(content: Text('정답'), duration: Duration(milliseconds: 500)),

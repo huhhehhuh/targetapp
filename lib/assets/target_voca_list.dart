@@ -6496,3 +6496,5 @@ const List<List<dynamic>> targetVoca = [
   ['6492', 'Section3', 'edu', '교육', 'Education'],
   ['6493', 'Section3', 'yangban', '양반', 'Part of the traditional ruling class or gentry of dynastic Korea during the Joseon Dynasty'],
 ];
+
+int get vocaLength => targetVoca.length;

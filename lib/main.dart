@@ -78,20 +78,21 @@ class AppState extends ChangeNotifier {
   List<List<int>> makeTest({
     required int problemCount,
     required bool isMultipleChoice,
+    required List<int> testDomain,
   }) {
     if (!isMultipleChoice) {
       //[문제번호]
-      final shuffled = List<int>.from(voca)..shuffle();
+      final shuffled = List<int>.from(testDomain)..shuffle();
       return shuffled.take(problemCount).map((e)=>[e]).toList();
     } else {
       //[문제번호, 선지1~5, 정답번호]
-      final shuffled = List<int>.from(voca)..shuffle();
+      final shuffled = List<int>.from(testDomain)..shuffle();
       final List<List<int>> problems = [];
       for (int i = 0; i < problemCount; i++) {
         int problemNumber = shuffled[i];
         List<int> options = [problemNumber];
         while (options.length < 5) {
-          int option = voca[Random().nextInt(voca.length)];
+          int option = testDomain[Random().nextInt(testDomain.length)];
           if (!options.contains(option)) {
             options.add(option);
           }

@@ -94,7 +94,7 @@ class _TestSettingState extends State<TestSetting> {
                     ),
                     child: DropdownButtonFormField<String>(
                       initialValue: _dropDownLatter,
-                      items: ['한글단어', '영단어', '영영풀이']
+                      items: ['한글단어', '영단어']
                           .map(
                             (e) => DropdownMenuItem<String>(
                               value: e,
@@ -203,8 +203,24 @@ class _TestSettingState extends State<TestSetting> {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: Text('오류'),
+                        title: Text('오류', style: TextStyle(color: Colors.red),),
                         content: Text('문제 유형과 선지가 같을 수 없어요.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('확인'),
+                          ),
+                        ],
+                      ),
+                    );
+                    return;
+                  }
+                  if (!_isMultipleChoice && _dropDownLatter != '영단어') {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('오류', style: TextStyle(color: Colors.red),),
+                        content: Text('주관식은 답안 유형이 영단어여야 해요.'),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
@@ -230,7 +246,11 @@ class _TestSettingState extends State<TestSetting> {
                       testList: Provider.of<AppState>(
                         context,
                         listen: false,
-                      ).makeTest(problemCount: _selectedCount, isMultipleChoice: _isMultipleChoice),
+                      ).makeTest(
+                        problemCount: _selectedCount, 
+                        isMultipleChoice: _isMultipleChoice,
+                        testDomain: Provider.of<AppState>(context, listen: false).voca,
+                      ),
                     ),
                   );
                 },

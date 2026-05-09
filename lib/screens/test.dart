@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:targetapp/main.dart';
 import '../assets/target_voca_list.dart';
-import 'package:provider/provider.dart';
-import 'dart:math';
 import 'package:targetapp/screens/result.dart';
 
 class Test extends StatefulWidget {
@@ -14,6 +11,7 @@ class Test extends StatefulWidget {
 
 class _TestState extends State<Test> {
   late TestArgs _args;
+  final TextEditingController _answerController = TextEditingController();
   static const Map<String, int> _transFormat = {'한글단어': 3, '영단어': 2, '영영풀이': 4};
   int trans(String format) {
     return _transFormat[format] ??
@@ -26,6 +24,12 @@ class _TestState extends State<Test> {
   int? _selectedOption;
   late int _correctCount;
   late List<List<int>> _wrongs;
+
+  @override
+  void dispose() {
+    _answerController.dispose();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -57,7 +61,7 @@ class _TestState extends State<Test> {
           problemForm: _args.problemForm,
           answerForm: _args.answerForm,
           isMultipleChoice: _args.isMultipleChoice,
-          wrongs: _wrongs,
+          wrongs: _wrongs..sort((a, b) => a[0].compareTo(b[0])),
           testNumber: _testNumber,
         ),
       );
@@ -70,7 +74,7 @@ class _TestState extends State<Test> {
 
     return Scaffold(
       appBar: AppBar(title: Text(
-                  '$_args.title',
+                  '${_args.title}',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),),
       body: SafeArea(
@@ -123,9 +127,22 @@ class _TestState extends State<Test> {
                             .toList(),
                       ),
                     ],
+                  )
+                else //주관식
+                  Column(
+                    children: [
+                      SizedBox(
+                        width : 400,
+                        child: TextField(
+                          autofocus: true,
+                          controller: _answerController,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                // else //주관식
-                //   Column(children: [TextField()]),
                 SizedBox(height: 20),
 
                 // 제출/다음 버튼
@@ -142,20 +159,39 @@ class _TestState extends State<Test> {
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () {
-                    if (_selectedOption == _args.testList[_problemNumber-1][6]) {
-                      setState(()=> _correctCount++);
-                      //정답 유무에 따른 애니메이션 구현해야됨
-                      // ScaffoldMessenger.of(context).showSnackBar(
-                      //   SnackBar(content: Text('정답'), duration: Duration(milliseconds: 500)),
-                      // );
+                    if (_args.isMultipleChoice) {
+                      if (_selectedOption == _args.testList[_problemNumber-1][6]) {
+                        setState(()=> _correctCount++);
+                        //정답 유무에 따른 애니메이션 구현해야됨
+                        // ScaffoldMessenger.of(context).showSnackBar(
+                        //   SnackBar(content: Text('정답'), duration: Duration(milliseconds: 500)),
+                        // );
+                      } else {
+                        _wrongs.add(_args.testList[_problemNumber - 1]);
+                        // ScaffoldMessenger.of(context).showSnackBar(
+                        //   SnackBar(
+                        //     content: Text('오답 / 정답 : ${targetVoca[_args.testList[_problemNumber - 1][0]][trans(_args.answerForm)]}'),
+                        //     duration: Duration(milliseconds: 500),
+                        //   ),
+                        // );
+                      }
                     } else {
-                      _wrongs.add(_args.testList[_problemNumber - 1]);
-                      // ScaffoldMessenger.of(context).showSnackBar(
-                      //   SnackBar(
-                      //     content: Text('오답 / 정답 : ${targetVoca[_args.testList[_problemNumber - 1][0]][trans(_args.answerForm)]}'),
-                      //     duration: Duration(milliseconds: 500),
-                      //   ),
-                      // );
+                      if (_answerController.text.trim() ==
+                          targetVoca[_args.testList[_problemNumber - 1][0]][trans(_args.answerForm)]) {
+                        setState(() => _correctCount++);
+                        // ScaffoldMessenger.of(context).showSnackBar(
+                        //   SnackBar(content: Text('정답'), duration: Duration(milliseconds: 500)),
+                        // );
+                      } else {
+                        _wrongs.add(_args.testList[_problemNumber - 1]);
+                        // ScaffoldMessenger.of(context).showSnackBar(
+                        //   SnackBar(
+                        //     content: Text('오답 / 정답 : ${targetVoca[_args.testList[_problemNumber - 1][0]][trans(_args.answerForm)]}'),
+                        //     duration: Duration(milliseconds: 500),
+                        //   ),
+                        // );
+                      }
+                      _answerController.clear();
                     }
                     nextProblem();
                   },

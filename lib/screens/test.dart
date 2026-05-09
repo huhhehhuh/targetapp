@@ -52,6 +52,7 @@ class _TestState extends State<Test> {
       });
     } else {
       //시험 종료
+      
       Navigator.pushNamed(
         context,
         '/result',

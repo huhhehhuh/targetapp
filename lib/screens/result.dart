@@ -57,7 +57,6 @@ class _ResultState extends State<Result> {
 
   @override
   Widget build(BuildContext context) {
-    final appState = Provider.of<AppState>(context, listen: false);
 
     return Scaffold(
       body: SafeArea(

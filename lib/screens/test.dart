@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../assets/target_voca_list.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../assets/target_voca_list.dart';
 import '../main.dart';
 import 'result.dart';
 

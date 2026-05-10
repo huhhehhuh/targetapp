@@ -25,7 +25,7 @@ class _ResultState extends State<Result> {
 
   void _showWrongList(BuildContext context) {
     // showDialog(
-    //   context: context, 
+    //   context: context,
     //   builder: (context) => AlertDialog(
     //     title: Text('틀린 문제 목록'),
     //     content: SizedBox(
@@ -70,7 +70,7 @@ class _ResultState extends State<Result> {
                 SizedBox(height: 10),
                 //시험 결과 내용
                 Text(
-                  '정답률 ${double.parse(_accuracy.toStringAsFixed(2))}%',
+                  '정답률 ${double.parse(_accuracy.toStringAsFixed(2))}%(${_args.correctCount}/${_args.totalCount})',
                   style: TextStyle(fontSize: 20),
                 ),
 
@@ -112,15 +112,18 @@ class _ResultState extends State<Result> {
                                 isMultipleChoice: _args.isMultipleChoice,
                                 problemCount:
                                     _args.totalCount - _args.correctCount,
-                                testList: Provider.of<AppState>(
-                                  context,
-                                  listen: false,
-                                ).makeTest(
-                                  problemCount:
-                                      _args.totalCount - _args.correctCount,
-                                  isMultipleChoice: _args.isMultipleChoice,
-                                  testDomain: _args.wrongs.map((e) => e[0]).toList(),
-                                ),
+                                testList:
+                                    Provider.of<AppState>(
+                                      context,
+                                      listen: false,
+                                    ).makeTest(
+                                      problemCount:
+                                          _args.totalCount - _args.correctCount,
+                                      isMultipleChoice: _args.isMultipleChoice,
+                                      testDomain: _args.wrongs
+                                          .map((e) => e[0])
+                                          .toList(),
+                                    ),
                                 testNumber: _args.testNumber + 1,
                               ),
                             );

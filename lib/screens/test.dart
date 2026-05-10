@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
-import '../assets/target_voca_list.dart';
-import 'package:targetapp/screens/result.dart';
 import 'package:provider/provider.dart';
-import 'package:targetapp/main.dart';
+
+import '../assets/target_voca_list.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../assets/target_voca_list.dart';
+import '../main.dart';
+import 'result.dart';
 
 class Test extends StatefulWidget {
   const Test({super.key});
@@ -56,6 +61,7 @@ class _TestState extends State<Test> {
       });
     } else {
       //시험 종료
+
       Navigator.pushNamed(
         context,
         '/result',
@@ -175,6 +181,10 @@ class _TestState extends State<Test> {
                         // );
                       } else {
                         _wrongs.add(_args.testList[_problemNumber - 1]);
+                        context.read<AppState>().addWrong(
+                          _args.testList[_problemNumber - 1][0],
+                        );
+                        //틀린 문제 번호를 AppState의 wrong에 추가
                         // ScaffoldMessenger.of(context).showSnackBar(
                         //   SnackBar(
                         //     content: Text('오답 / 정답 : ${targetVoca[_args.testList[_problemNumber - 1][0]][trans(_args.answerForm)]}'),
@@ -192,6 +202,9 @@ class _TestState extends State<Test> {
                         // );
                       } else {
                         _wrongs.add(_args.testList[_problemNumber - 1]);
+                        context.read<AppState>().addWrong(
+                              _args.testList[_problemNumber - 1][0],
+                            );
                         // ScaffoldMessenger.of(context).showSnackBar(
                         //   SnackBar(
                         //     content: Text('오답 / 정답 : ${targetVoca[_args.testList[_problemNumber - 1][0]][trans(_args.answerForm)]}'),

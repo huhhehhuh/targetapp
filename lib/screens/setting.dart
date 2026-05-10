@@ -231,9 +231,9 @@ class _SettingState extends State<Setting> {
                 onPressed: () {
                   if (_dropDownProblem == _dropDownAnswer) {
                     showDialog(
-                      context: context, 
+                      context: context,
                       builder: (BuildContext context) => AlertDialog(
-                        title: Text('오류', style: TextStyle(color: Colors.red),),
+                        title: Text('오류', style: TextStyle(color: Colors.red)),
                         content: Text('문제와 답안의 유형이 같을 수 없어요.'),
                         actions: [
                           TextButton(
@@ -245,17 +245,20 @@ class _SettingState extends State<Setting> {
                     );
                     return;
                   }
-                  if (!_isMultipleChoice && _dropDownAnswer != '영단어'){
-                    showDialog(context: context, builder: (BuildContext context) => AlertDialog(
-                      title: Text('오류', style: TextStyle(color: Colors.red),),
-                      content: Text('주관식은 답안 유형이 영단어여야 해요.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text('확인'),
-                        ),
-                      ],
-                    ));
+                  if (!_isMultipleChoice && _dropDownAnswer != '영단어') {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) => AlertDialog(
+                        title: Text('오류', style: TextStyle(color: Colors.red)),
+                        content: Text('주관식은 답안 유형이 영단어여야 해요.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('확인'),
+                          ),
+                        ],
+                      ),
+                    );
                     return;
                   }
                   final appState = Provider.of<AppState>(

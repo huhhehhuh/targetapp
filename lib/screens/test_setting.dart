@@ -203,7 +203,7 @@ class _TestSettingState extends State<TestSetting> {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: Text('오류', style: TextStyle(color: Colors.red),),
+                        title: Text('오류', style: TextStyle(color: Colors.red)),
                         content: Text('문제 유형과 선지가 같을 수 없어요.'),
                         actions: [
                           TextButton(
@@ -219,7 +219,7 @@ class _TestSettingState extends State<TestSetting> {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: Text('오류', style: TextStyle(color: Colors.red),),
+                        title: Text('오류', style: TextStyle(color: Colors.red)),
                         content: Text('주관식은 답안 유형이 영단어여야 해요.'),
                         actions: [
                           TextButton(
@@ -243,14 +243,15 @@ class _TestSettingState extends State<TestSetting> {
                       isMultipleChoice: _isMultipleChoice,
                       problemCount: _selectedCount,
                       testNumber: 0,
-                      testList: Provider.of<AppState>(
-                        context,
-                        listen: false,
-                      ).makeTest(
-                        problemCount: _selectedCount, 
-                        isMultipleChoice: _isMultipleChoice,
-                        testDomain: Provider.of<AppState>(context, listen: false).voca,
-                      ),
+                      testList: Provider.of<AppState>(context, listen: false)
+                          .makeTest(
+                            problemCount: _selectedCount,
+                            isMultipleChoice: _isMultipleChoice,
+                            testDomain: Provider.of<AppState>(
+                              context,
+                              listen: false,
+                            ).voca,
+                          ),
                     ),
                   );
                 },

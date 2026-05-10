@@ -38,7 +38,7 @@ class Home extends StatelessWidget {
                     ),
                     onPressed: () => Navigator.pushNamed(
                       context,
-                      '/targetView',
+                      '/targetview',
                       arguments: 'all',
                     ), //얘는 지환이가 만들면 navigator 추가
                     child: Column(
@@ -64,7 +64,8 @@ class Home extends StatelessWidget {
                         borderRadius: BorderRadius.circular(24),
                       ),
                     ),
-                    onPressed: () => Navigator.pushNamed(context, '/testsetting'),
+                    onPressed: () =>
+                        Navigator.pushNamed(context, '/testsetting'),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

@@ -101,7 +101,7 @@ class AppState extends ChangeNotifier {
         int problemNumber = shuffled[i];
         List<int> options = [problemNumber];
         while (options.length < 5) {
-          int option = testDomain[Random().nextInt(testDomain.length)];
+          int option = voca[Random().nextInt(voca.length)];
           if (!options.contains(option)) {
             options.add(option);
           }

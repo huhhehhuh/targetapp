@@ -201,6 +201,7 @@ class _TestState extends State<Test> {
                         context.read<AppState>().addWrong(
                               _args.testList[_problemNumber - 1][0],
                             );
+                            //사람이 어? 좀 놓칠수도있지
                         // ScaffoldMessenger.of(context).showSnackBar(
                         //   SnackBar(
                         //     content: Text('오답 / 정답 : ${targetVoca[_args.testList[_problemNumber - 1][0]][trans(_args.answerForm)]}'),

@@ -63,8 +63,7 @@ class Home extends StatelessWidget {
                       borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                  onPressed: () =>
-                      Navigator.pushNamed(context, '/testsetting'),
+                  onPressed: () => Navigator.pushNamed(context, '/testsetting'),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -157,10 +156,7 @@ class Home extends StatelessWidget {
                 children: [
                   Text(
                     '설정',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(width: 5),
                   Icon(Icons.settings, size: 32),

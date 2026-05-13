@@ -81,145 +81,160 @@ class _TestState extends State<Test> {
   @override
   Widget build(BuildContext context) {
     _args.testList.forEach((item) => debugPrint(item.toString()));
+    final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          '${_args.title}',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Center(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // 문제 부분
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: 200),
-                  child: Text(
-                    '$_problemNumber. ${targetVoca[_args.testList[_problemNumber - 1][0]][trans(_args.problemForm)]}',
-                    style: TextStyle(fontSize: 19),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: screenWidth * 0.8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    '${_args.title}',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                ),
-                SizedBox(height: 20),
+                  // 문제 부분
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: 200),
+                    child: Text(
+                      '$_problemNumber. ${targetVoca[_args.testList[_problemNumber - 1][0]][trans(_args.problemForm)]}',
+                      style: TextStyle(fontSize: 19),
+                    ),
+                  ),
+                  SizedBox(height: 20),
 
-                // 선지 부분
-                //객관식 -> 나중에 elevetedButton으로 바꾸기. 꼭! fuck, 토글은 개별 버튼 디자인이 안돼서 너무 짜침
-                if (_args.isMultipleChoice)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      ToggleButtons(
-                        direction: Axis.vertical,
-                        borderRadius: BorderRadius.circular(8),
-                        isSelected: List<bool>.generate(
-                          5,
-                          (i) => i == _selectedOption,
-                        ),
-                        onPressed: (int index) {
-                          setState(() {
-                            _selectedOption = index;
-                          });
-                        },
-                        children: _args.testList[_problemNumber - 1]
-                            .sublist(1, 6)
-                            .map(
-                              (i) => SizedBox(
-                                height: 50,
-                                width: 400,
-                                child: Center(
-                                  child: Text(
-                                    targetVoca[i][trans(_args.answerForm)],
-                                  ),
-                                ),
+                  // 선지 부분
+                  //객관식 -> 나중에 elevetedButton으로 바꾸기. 꼭! fuck, 토글은 개별 버튼 디자인이 안돼서 너무 짜침
+                  if (_args.isMultipleChoice)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: List.generate(5, (index) {
+                        final isSelected = _selectedOption == index;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 14,
                               ),
-                            )
-                            .toList(),
-                      ),
-                    ],
-                  )
-                else //주관식
-                  Column(
-                    children: [
-                      SizedBox(
-                        width: 400,
-                        child: TextField(
-                          autofocus: true,
-                          controller: _answerController,
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(),
+                              minimumSize: const Size(400, 50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              backgroundColor: isSelected
+                                  ? Colors.blue
+                                  : Colors.grey[200],
+                              foregroundColor: isSelected
+                                  ? Colors.white
+                                  : Colors.black87,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _selectedOption = index;
+                              });
+                            },
+                            child: Text(
+                              targetVoca[_args.testList[_problemNumber -
+                                  1][index + 1]][trans(_args.answerForm)],
+                            ),
+                          ),
+                        );
+                      }),
+                    )
+                  else //주관식
+                    Column(
+                      children: [
+                        SizedBox(
+                          width: 400,
+                          child: TextField(
+                            autofocus: true,
+                            controller: _answerController,
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                SizedBox(height: 20),
+                      ],
+                    ),
+                  SizedBox(height: 20),
 
-                // 제출/다음 버튼
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 120,
-                      vertical: 20,
+                  // 제출/다음 버튼
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 120,
+                        vertical: 20,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () {
-                    if (_args.isMultipleChoice) {
-                      if (_selectedOption ==
-                          _args.testList[_problemNumber - 1][6]) {
-                        setState(() => _correctCount++);
-                        //정답 유무에 따른 애니메이션 구현해야됨
-                        // ScaffoldMessenger.of(context).showSnackBar(
-                        //   SnackBar(content: Text('정답'), duration: Duration(milliseconds: 500)),
-                        // );
-                      } else {
-                        _wrongs.add(_args.testList[_problemNumber - 1]);
-                        context.read<AppState>().addWrong(
-                          _args.testList[_problemNumber - 1][0],
-                        );
-                        //틀린 문제 번호를 AppState의 wrong에 추가
-                        // ScaffoldMessenger.of(context).showSnackBar(
-                        //   SnackBar(
-                        //     content: Text('오답 / 정답 : ${targetVoca[_args.testList[_problemNumber - 1][0]][trans(_args.answerForm)]}'),
-                        //     duration: Duration(milliseconds: 500),
-                        //   ),
-                        // );
-                      }
-                    } else {
-                      if (_answerController.text.trim() ==
+                    onPressed: () {
+                      bool isCorrect;
+                      String correctAnswer =
                           targetVoca[_args.testList[_problemNumber -
-                              1][0]][trans(_args.answerForm)]) {
-                        setState(() => _correctCount++);
-                        // ScaffoldMessenger.of(context).showSnackBar(
-                        //   SnackBar(content: Text('정답'), duration: Duration(milliseconds: 500)),
-                        // );
+                              1][0]][trans(_args.answerForm)];
+                      if (_args.isMultipleChoice) {
+                        if (_selectedOption ==
+                            _args.testList[_problemNumber - 1][6]) {
+                          setState(() => _correctCount++);
+                          isCorrect = true;
+                          //정답 유무에 따른 애니메이션 구현해야됨
+                        } else {
+                          isCorrect = false;
+                          _wrongs.add(_args.testList[_problemNumber - 1]);
+                          context.read<AppState>().addWrong(
+                            _args.testList[_problemNumber - 1][0],
+                          );
+                        }
                       } else {
-                        _wrongs.add(_args.testList[_problemNumber - 1]);
-                        context.read<AppState>().addWrong(
-                              _args.testList[_problemNumber - 1][0],
-                            );
-                            //사람이 어? 좀 놓칠수도있지
-                        // ScaffoldMessenger.of(context).showSnackBar(
-                        //   SnackBar(
-                        //     content: Text('오답 / 정답 : ${targetVoca[_args.testList[_problemNumber - 1][0]][trans(_args.answerForm)]}'),
-                        //     duration: Duration(milliseconds: 500),
-                        //   ),
-                        // );
+                        if (_answerController.text.trim() ==
+                            targetVoca[_args.testList[_problemNumber -
+                                1][0]][trans(_args.answerForm)]) {
+                          setState(() => _correctCount++);
+                          isCorrect = true;
+                        } else {
+                          isCorrect = false;
+                          _wrongs.add(_args.testList[_problemNumber - 1]);
+                          context.read<AppState>().addWrong(
+                            _args.testList[_problemNumber - 1][0],
+                          );
+                          //사람이 어? 좀 놓칠수도있지. ?tq?
+                        }
+                        _answerController.clear();
                       }
-                      _answerController.clear();
-                    }
-                    nextProblem();
-                  },
-                  child: Text('다음'),
-                ),
-              ],
+
+                      nextProblem();
+
+                      //showDialog써서 화면 가운데에 띄우려했는데 실패. 일단 스낵바로 해놓음.
+                      if (isCorrect) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('정답'),
+                            backgroundColor: Colors.green,
+                            duration: Duration(milliseconds: 500),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('오답. $correctAnswer'),
+                            backgroundColor: Colors.red,
+                            duration: Duration(milliseconds: 1500),
+                          ),
+                        );
+                      }
+                    },
+                    child: Text('다음'),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -57,14 +57,19 @@ class _ResultState extends State<Result> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height-MediaQuery.of(context).padding.top,
+
           child: Center(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                Spacer(),
                 Text('시험 결과', style: TextStyle(fontSize: 24)),
                 SizedBox(height: 10),
                 //시험 결과 내용
@@ -72,7 +77,8 @@ class _ResultState extends State<Result> {
                   '정답률 ${double.parse(_accuracy.toStringAsFixed(2))}%(${_args.correctCount}/${_args.totalCount})',
                   style: TextStyle(fontSize: 20),
                 ),
-
+                Spacer(),
+                    
                 if (_args.wrongs.isNotEmpty)
                   Column(
                     children: [
@@ -133,7 +139,7 @@ class _ResultState extends State<Result> {
                       SizedBox(height: 10),
                     ],
                   ),
-
+                    
                 //홈으로
                 SizedBox(
                   width: 300,
@@ -148,6 +154,7 @@ class _ResultState extends State<Result> {
                     child: Text('홈으로', style: TextStyle(fontSize: 16)),
                   ),
                 ),
+                SizedBox(height: screenHeight * 0.2),
               ],
             ),
           ),

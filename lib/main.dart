@@ -12,8 +12,8 @@ import 'dart:math';
 void main() {
   runApp(ChangeNotifierProvider(create: (_) => AppState(), child: TargetApp()));
 }
-//주관식에서는 답안 양식에 영단어 이외로 선택하면 경고메시지
 
+//주관식에서는 답안 양식에 영단어 이외로 선택하면 경고메시지
 class TargetApp extends StatelessWidget {
   const TargetApp({super.key});
 

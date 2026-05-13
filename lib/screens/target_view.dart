@@ -1,4 +1,9 @@
 // lib/screens/target_view.dart
+//내게는 고통밖에 없습니다.
+//그것 말고는 아무것도 바라지 않습니다.
+//고통은 내게 충실했고 그것은 지금도 변함이 없습니다.
+//내 영혼이 심연의 바닥을 헤맬 때에도
+//고통은 늘 곁에 앉아 나를 지켜주었으니 어떻게 고통을 원망하겠습니까.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
@@ -51,9 +56,7 @@ class _TargetViewState extends State<TargetView> {
         : appState.wrong.values.reduce((a, b) => a > b ? a : b);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
+      appBar: AppBar(title: Text(title)),
       body: wordList.isEmpty
           ? const Center(
               child: Text(

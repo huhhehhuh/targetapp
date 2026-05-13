@@ -189,9 +189,6 @@ class _TestState extends State<Test> {
                         } else {
                           isCorrect = false;
                           _wrongs.add(_args.testList[_problemNumber - 1]);
-                          context.read<AppState>().addWrong(
-                            _args.testList[_problemNumber - 1][0],
-                          );
                         }
                       } else {
                         if (_answerController.text.trim() ==
@@ -202,17 +199,13 @@ class _TestState extends State<Test> {
                         } else {
                           isCorrect = false;
                           _wrongs.add(_args.testList[_problemNumber - 1]);
-                          context.read<AppState>().addWrong(
-                            _args.testList[_problemNumber - 1][0],
-                          );
-                          //사람이 어? 좀 놓칠수도있지. ?tq?
                         }
                         _answerController.clear();
                       }
 
                       nextProblem();
 
-                      //showDialog써서 화면 가운데에 띄우려했는데 실패. 일단 스낵바로 해놓음.
+                      //showDialog써서 화면 가운데에 띄우려했는데 실패. 일단 스낵바로 해놓음. 푸하하!
                       if (isCorrect) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(

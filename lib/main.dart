@@ -10,7 +10,9 @@ import 'screens/result.dart';
 import 'dart:math';
 
 void main() {
-  runApp(ChangeNotifierProvider(create: (_) => AppState(), child: TargetApp()));
+  runApp(
+    ChangeNotifierProvider(create: (_) => AppState(), child: const TargetApp()),
+  );
 }
 
 //주관식에서는 답안 양식에 영단어 이외로 선택하면 경고메시지
@@ -19,19 +21,16 @@ class TargetApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AppState(),
-      child: MaterialApp(
-        title: 'Target App',
-        routes: {
-          '/': (context) => const Home(),
-          '/testsetting': (context) => const TestSetting(),
-          '/setting': (context) => const Setting(),
-          '/test': (context) => const Test(),
-          '/targetview': (context) => const TargetView(),
-          '/result': (context) => const Result(),
-        },
-      ),
+    return MaterialApp(
+      title: 'Target App',
+      routes: {
+        '/': (context) => const Home(),
+        '/testsetting': (context) => const TestSetting(),
+        '/setting': (context) => const Setting(),
+        '/test': (context) => const Test(),
+        '/targetview': (context) => const TargetView(),
+        '/result': (context) => const Result(),
+      },
     );
   }
 }
@@ -45,16 +44,23 @@ class AppState extends ChangeNotifier {
   List<int> voca =
       testDomain[2]; //얘는 int로 번호만 저장되어 있음. 근데 내가 testDomain에서 0번 인덱스를 비워놔서 1-based.
   List<int> favorites = [];
-  List<int> wrong = [];
+  Map<int, int> wrong = {}; //틀린 문제 번호와 틀린 횟수 저장
 
   //즐겨찾기 초기화 함수
   void resetFavorites() {
     favorites = [];
+    notifyListeners();
   }
 
-  //오답 초기화 함수
   void resetWrong() {
-    wrong = [];
+    wrong.clear();
+    notifyListeners();
+  }
+
+  //틀린 문제 추가 함수
+  void addWrong(int wordNumber) {
+    wrong[wordNumber] = (wrong[wordNumber] ?? 0) + 1;
+    notifyListeners();
   }
 
   //설정 저장 함수
@@ -65,14 +71,14 @@ class AppState extends ChangeNotifier {
     required bool isMultipleChoice,
     required int problemCount,
   }) {
-    if (this.grade != grade) {
-      voca = testDomain[this.grade];
-    }
     this.grade = grade ?? this.grade;
+    voca = testDomain[this.grade];
+
     this.problemForm = problemForm ?? this.problemForm;
     this.answerForm = answerForm ?? this.answerForm;
     this.isMultipleChoice = isMultipleChoice;
     this.problemCount = problemCount;
+
     notifyListeners();
   }
 
@@ -85,7 +91,7 @@ class AppState extends ChangeNotifier {
     if (!isMultipleChoice) {
       //[문제번호]
       final shuffled = List<int>.from(testDomain)..shuffle();
-      return shuffled.take(problemCount).map((e)=>[e]).toList();
+      return shuffled.take(problemCount).map((e) => [e]).toList();
     } else {
       //[문제번호, 선지1~5, 정답번호]
       final shuffled = List<int>.from(testDomain)..shuffle();
@@ -109,12 +115,14 @@ class AppState extends ChangeNotifier {
       return problems;
     }
   }
-  void toggleFavorite(int wordNumber) { //즐겨찾기 기능
-  if (favorites.contains(wordNumber)) {
-    favorites.remove(wordNumber);
-  } else {
-    favorites.add(wordNumber);
+
+  void toggleFavorite(int wordNumber) {
+    //즐겨찾기 기능
+    if (favorites.contains(wordNumber)) {
+      favorites.remove(wordNumber);
+    } else {
+      favorites.add(wordNumber);
+    }
+    notifyListeners();
   }
-  notifyListeners();
-}
 }

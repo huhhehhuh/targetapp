@@ -14,6 +14,7 @@ void main() {
     ChangeNotifierProvider(create: (_) => AppState(), child: const TargetApp()),
   );
 }
+//앱 배포할때 꼭 로컬 DB에 오답노트, 즐겨찾기 저장하게 수정(지금은 웹이라 안함)
 
 //주관식에서는 답안 양식에 영단어 이외로 선택하면 경고메시지
 class TargetApp extends StatelessWidget {

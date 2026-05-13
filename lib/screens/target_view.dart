@@ -20,6 +20,8 @@ class TargetView extends StatefulWidget {
 }
 
 class _TargetViewState extends State<TargetView> {
+  String _searchKeyword = ''; //검색 기능 추가해봄, 일단 영어 검색만 가능함
+
   @override
   Widget build(BuildContext context) {
     final String mode =
@@ -51,6 +53,19 @@ class _TargetViewState extends State<TargetView> {
         break;
     }
 
+    final List<int> filteredWordList = wordList.where((wordNumber) {
+      final wordData = targetVoca[wordNumber];
+
+      final String word = wordData[2].toString().toLowerCase();
+      final String keyword = _searchKeyword.trim().toLowerCase();
+
+      if (keyword.isEmpty) {
+        return true;
+      }
+
+      return word.contains(keyword);
+    }).toList();
+
     final int maxWrongCount = appState.wrong.isEmpty
         ? 1
         : appState.wrong.values.reduce((a, b) => a > b ? a : b);
@@ -64,132 +79,170 @@ class _TargetViewState extends State<TargetView> {
                 style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
             )
-          : ListView.builder(
-              itemCount: wordList.length,
-              itemBuilder: (context, index) {
-                final int wordNumber = wordList[index];
-
-                final wordData = targetVoca[wordNumber];
-
-                final String level = wordData[1].toString();
-                final String word = wordData[2].toString();
-                final String koreanMeaning = wordData[3].toString();
-                final String englishMeaning = wordData[4].toString();
-
-                final int wrongCount = appState.wrong[wordNumber] ?? 0;
-                final double wrongRatio = wrongCount / maxWrongCount;
-
-                final Color cardColor = mode == 'wrongs' && wrongCount > 0
-                    ? Color.lerp(
-                        const Color(0xFFE8F5E9),
-                        const Color(0xFFFFEBEE),
-                        wrongRatio,
-                      )!
-                    : Colors.white;
-
-                return Card(
-                  color: cardColor,
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      hintText: '영어 단어 검색',
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(),
                     ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 52,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                '$wordNumber',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              Text(
-                                level,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
+                    onChanged: (value) {
+                      setState(() {
+                        _searchKeyword = value;
+                      });
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: filteredWordList.isEmpty
+                      ? const Center(
+                          child: Text(
+                            '검색 결과가 없습니다',
+                            style: TextStyle(fontSize: 16, color: Colors.grey),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      word,
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
+                        )
+                      : ListView.builder(
+                          itemCount: filteredWordList.length,
+                          itemBuilder: (context, index) {
+                            final int wordNumber = filteredWordList[index];
+
+                            final wordData = targetVoca[wordNumber];
+
+                            final String level = wordData[1].toString();
+                            final String word = wordData[2].toString();
+                            final String koreanMeaning = wordData[3].toString();
+                            final String englishMeaning = wordData[4]
+                                .toString();
+
+                            final int wrongCount =
+                                appState.wrong[wordNumber] ?? 0;
+                            final double wrongRatio =
+                                wrongCount / maxWrongCount;
+
+                            final Color cardColor =
+                                mode == 'wrongs' && wrongCount > 0
+                                ? Color.lerp(
+                                    const Color(0xFFE8F5E9),
+                                    const Color(0xFFFFEBEE),
+                                    wrongRatio,
+                                  )!
+                                : Colors.white;
+
+                            return Card(
+                              color: cardColor,
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 52,
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            '${index + 1}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                          Text(
+                                            level,
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(
-                                      appState.favorites.contains(wordNumber)
-                                          ? Icons.star
-                                          : Icons.star_border,
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  word,
+                                                  style: const TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                              IconButton(
+                                                icon: Icon(
+                                                  appState.favorites.contains(
+                                                        wordNumber,
+                                                      )
+                                                      ? Icons.star
+                                                      : Icons.star_border,
+                                                ),
+                                                onPressed: () {
+                                                  appState.toggleFavorite(
+                                                    wordNumber,
+                                                  );
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            koreanMeaning,
+                                            softWrap: true,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              height: 1.45,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            englishMeaning,
+                                            softWrap: true,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              height: 1.35,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                          if (mode == 'wrongs') ...[
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              '$wrongCount회 틀림',
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.redAccent,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
                                     ),
-                                    onPressed: () {
-                                      appState.toggleFavorite(wordNumber);
-                                    },
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                koreanMeaning,
-                                softWrap: true,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  height: 1.45,
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                englishMeaning,
-                                softWrap: true,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  height: 1.35,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              if (mode == 'wrongs') ...[
-                                const SizedBox(height: 6),
-                                Text(
-                                  '$wrongCount회 틀림',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.redAccent,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
+                            );
+                          },
                         ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+                ),
+              ],
             ),
     );
   }

@@ -16,7 +16,7 @@ jobs:
           flutter-version: '3.x'
 
       - run: flutter pub get
-      - run: flutter build web --base-href "/target/"
+      - run: flutter build web --base-href "/targetapp/"
 
       - name: Copy index.html to 404.html
         run: cp build/web/index.html build/web/404.html

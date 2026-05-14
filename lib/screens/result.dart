@@ -82,7 +82,22 @@ class _ResultState extends State<Result> {
                         '$wordNumber. $word',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      subtitle: Text(koreanMeaning),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(koreanMeaning),
+                          const SizedBox(height: 4),
+                          Text(_wrongSelections[index] ?
+                          '오답노트에 추가됨' : '오답노트에 추가 안함',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: 
+                            _wrongSelections[index] ? Colors.red : Colors.grey,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          )
+                        ],
+                      ),
                       controlAffinity: ListTileControlAffinity.trailing,
                     );
                   },

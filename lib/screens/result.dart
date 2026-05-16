@@ -15,7 +15,6 @@ class Result extends StatefulWidget {
 class _ResultState extends State<Result> {
   late double _accuracy;
   late ResultArgs _args;
-  late final _appState;
   late List<bool> _wrongSelections;
   bool _wrongSaved = false;
   bool _initialized = false;
@@ -26,21 +25,20 @@ class _ResultState extends State<Result> {
     if (_initialized) return;
     _initialized = true;
 
-    _appState = Provider.of<AppState>(context, listen: false);
     _args = ModalRoute.of(context)!.settings.arguments as ResultArgs;
     _accuracy = _args.correctCount / _args.totalCount * 100;
 
     _wrongSelections = List<bool>.filled(_args.wrongs.length, true);
   }
 
-  void _saveSelectedWrongs() {
+  Future<void> _saveSelectedWrongs() async {
     if (_wrongSaved) return;
 
     final appState = context.read<AppState>();
 
     for (int i = 0; i < _args.wrongs.length; i++) {
       if (_wrongSelections[i]) {
-        appState.addWrong(_args.wrongs[i][0]);
+        await appState.addWrong(_args.wrongs[i][0]);
       }
     }
 
@@ -87,15 +85,18 @@ class _ResultState extends State<Result> {
                         children: [
                           Text(koreanMeaning),
                           const SizedBox(height: 4),
-                          Text(_wrongSelections[index] ?
-                          '오답노트에 추가됨' : '오답노트에 추가 안함',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: 
-                            _wrongSelections[index] ? Colors.red : Colors.grey,
-                            fontWeight: FontWeight.w600,
+                          Text(
+                            _wrongSelections[index]
+                                ? '오답노트에 추가됨'
+                                : '오답노트에 추가 안 함',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _wrongSelections[index]
+                                  ? Colors.red
+                                  : Colors.grey,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                          )
                         ],
                       ),
                       controlAffinity: ListTileControlAffinity.trailing,
@@ -118,7 +119,6 @@ class _ResultState extends State<Result> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
@@ -127,20 +127,20 @@ class _ResultState extends State<Result> {
           height:
               MediaQuery.of(context).size.height -
               MediaQuery.of(context).padding.top,
-
           child: Center(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Spacer(),
-                Text('시험 결과', style: TextStyle(fontSize: 24)),
-                SizedBox(height: 10),
+                const Spacer(),
+                const Text('시험 결과', style: TextStyle(fontSize: 24)),
+                const SizedBox(height: 10),
+
                 //시험 결과 내용
                 Text(
                   '정답률 ${double.parse(_accuracy.toStringAsFixed(2))}%(${_args.correctCount}/${_args.totalCount})',
-                  style: TextStyle(fontSize: 20),
+                  style: const TextStyle(fontSize: 20),
                 ),
-                Spacer(),
+                const Spacer(),
 
                 if (_args.wrongs.isNotEmpty)
                   Column(
@@ -168,8 +168,10 @@ class _ResultState extends State<Result> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          onPressed: () {
-                            _saveSelectedWrongs();
+                          onPressed: () async {
+                            await _saveSelectedWrongs();
+
+                            if (!context.mounted) return;
 
                             Navigator.pushReplacementNamed(
                               context,
@@ -200,7 +202,7 @@ class _ResultState extends State<Result> {
                           child: Text('${_args.testNumber + 1}차 복습'),
                         ),
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                     ],
                   ),
 
@@ -214,8 +216,10 @@ class _ResultState extends State<Result> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onPressed: () {
-                      _saveSelectedWrongs();
+                    onPressed: () async {
+                      await _saveSelectedWrongs();
+
+                      if (!context.mounted) return;
 
                       Navigator.pushNamedAndRemoveUntil(
                         context,
@@ -223,7 +227,7 @@ class _ResultState extends State<Result> {
                         (route) => false,
                       );
                     },
-                    child: Text('홈으로', style: TextStyle(fontSize: 16)),
+                    child: const Text('홈으로', style: TextStyle(fontSize: 16)),
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.2),

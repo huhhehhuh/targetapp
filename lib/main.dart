@@ -1,20 +1,29 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'screens/home.dart';
-import 'screens/test_setting.dart';
-import 'screens/setting.dart';
-import 'assets/test_domain.dart';
-import 'screens/test.dart';
-import 'screens/target_view.dart';
-import 'screens/result.dart';
+import 'dart:convert';
 import 'dart:math';
 
-void main() {
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'assets/test_domain.dart';
+import 'screens/home.dart';
+import 'screens/result.dart';
+import 'screens/setting.dart';
+import 'screens/target_view.dart';
+import 'screens/test.dart';
+import 'screens/test_setting.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  final appState = AppState();
+  await appState.loadData();
+
   runApp(
-    ChangeNotifierProvider(create: (_) => AppState(), child: const TargetApp()),
+    ChangeNotifierProvider.value(value: appState, child: const TargetApp()),
   );
 }
-//앱 배포할때 꼭 로컬 DB에 오답노트, 즐겨찾기 저장하게 수정(지금은 웹이라 안함)
+//앱 배포할때 꼭 로컬 DB에 오답노트, 즐겨찾기 저장하게 수정 - 내가해뒀어.
 
 //주관식에서는 답안 양식에 영단어 이외로 선택하면 경고메시지
 class TargetApp extends StatelessWidget {
@@ -23,6 +32,7 @@ class TargetApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Target App',
       routes: {
         '/': (context) => const Home(),
@@ -48,31 +58,39 @@ class AppState extends ChangeNotifier {
   Map<int, int> wrong = {}; //틀린 문제 번호와 틀린 횟수 저장
 
   //즐겨찾기 초기화 함수
-  void resetFavorites() {
-    favorites = [];
+  Future<void> resetFavorites() async {
+    favorites.clear();
+    await saveFavorites();
     notifyListeners();
   }
 
-  void resetWrong() {
+  Future<void> resetWrong() async {
     wrong.clear();
+    await saveWrong();
     notifyListeners();
   }
 
   //틀린 문제 추가 함수
-  void addWrong(int wordNumber) {
+  Future<void> addWrong(int wordNumber) async {
     wrong[wordNumber] = (wrong[wordNumber] ?? 0) + 1;
+    await saveWrong();
     notifyListeners();
   }
 
   //설정 저장 함수
-  void saveSettings({
+  Future<void> saveSettings({
     required int? grade,
     required String? problemForm,
     required String? answerForm,
     required bool isMultipleChoice,
     required int problemCount,
-  }) {
+  }) async {
     this.grade = grade ?? this.grade;
+
+    if (this.grade < 0 || this.grade >= testDomain.length) {
+      this.grade = 2;
+    }
+
     voca = testDomain[this.grade];
 
     this.problemForm = problemForm ?? this.problemForm;
@@ -80,7 +98,78 @@ class AppState extends ChangeNotifier {
     this.isMultipleChoice = isMultipleChoice;
     this.problemCount = problemCount;
 
+    await saveAppSettings();
     notifyListeners();
+  }
+
+  Future<void> loadData() async {
+    //즐겨찾기 오답노트 불러오기
+    final prefs = await SharedPreferences.getInstance();
+
+    final favoriteData = prefs.getStringList('favorites');
+    if (favoriteData != null) {
+      favorites = favoriteData.map(int.tryParse).whereType<int>().toList();
+    }
+
+    final wrongData = prefs.getString('wrong');
+    if (wrongData != null) {
+      try {
+        final decoded = jsonDecode(wrongData) as Map<String, dynamic>;
+
+        wrong = decoded.map(
+          (key, value) => MapEntry(int.parse(key), (value as num).toInt()),
+        );
+      } catch (_) {
+        wrong = {};
+        await saveWrong();
+      }
+    }
+
+    //설정 불러오기
+    problemForm = prefs.getString('problemForm') ?? problemForm;
+    answerForm = prefs.getString('answerForm') ?? answerForm;
+    isMultipleChoice = prefs.getBool('isMultipleChoice') ?? isMultipleChoice;
+    problemCount = prefs.getInt('problemCount') ?? problemCount;
+    grade = prefs.getInt('grade') ?? grade;
+
+    if (grade < 0 || grade >= testDomain.length) {
+      grade = 2;
+      await saveAppSettings();
+    }
+
+    //저장된 학년에 맞게 시험 범위 다시 설정
+    voca = testDomain[grade];
+
+    notifyListeners();
+  }
+
+  Future<void> saveFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setStringList(
+      'favorites',
+      favorites.map((e) => e.toString()).toList(),
+    );
+  }
+
+  Future<void> saveWrong() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final wrongToSave = wrong.map(
+      (key, value) => MapEntry(key.toString(), value),
+    );
+
+    await prefs.setString('wrong', jsonEncode(wrongToSave));
+  }
+
+  Future<void> saveAppSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('problemForm', problemForm);
+    await prefs.setString('answerForm', answerForm);
+    await prefs.setBool('isMultipleChoice', isMultipleChoice);
+    await prefs.setInt('problemCount', problemCount);
+    await prefs.setInt('grade', grade);
   }
 
   //문제 만들기
@@ -128,13 +217,14 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  void toggleFavorite(int wordNumber) {
-    //즐겨찾기 기능
+  Future<void> toggleFavorite(int wordNumber) async {
     if (favorites.contains(wordNumber)) {
       favorites.remove(wordNumber);
     } else {
       favorites.add(wordNumber);
     }
+
+    await saveFavorites();
     notifyListeners();
   }
 }

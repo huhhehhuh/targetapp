@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../assets/target_voca_list.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import '../assets/target_voca_list.dart';
-import '../main.dart';
 import 'result.dart';
 
 class Test extends StatefulWidget {
@@ -17,14 +11,21 @@ class Test extends StatefulWidget {
 }
 
 class _TestState extends State<Test> {
-  late final appState;
   late TestArgs _args;
   final TextEditingController _answerController = TextEditingController();
-  static const Map<String, int> _transFormat = {'한글단어': 3, '영단어': 2, '영영풀이': 4};
+
+  static const Map<String, int> _transFormat = {
+    '한글단어': 3,
+    '영단어': 2,
+    '영영풀이': 4,
+  };
+
   int trans(String format) {
     return _transFormat[format] ??
         (throw ArgumentError('Invalid field: $format'));
   }
+
+  bool _initialized = false;
 
   late int _testNumber;
   late int _problemNumber; //문제번호
@@ -42,9 +43,14 @@ class _TestState extends State<Test> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    appState = Provider.of<AppState>(context, listen: false);
+
+    if (_initialized) return;
+    _initialized = true;
+
     _args = ModalRoute.of(context)!.settings.arguments as TestArgs;
-    _totalCount = _args.problemCount;
+
+    // 실제 만들어진 문제 개수 기준으로 진행
+    _totalCount = _args.testList.length;
     _problemNumber = 1;
     _selectedOption = null;
     _correctCount = 0;
@@ -58,11 +64,11 @@ class _TestState extends State<Test> {
       setState(() {
         _problemNumber++;
         _selectedOption = null;
+        _answerController.clear();
       });
     } else {
       //시험 종료
-
-      Navigator.pushNamed(
+      Navigator.pushReplacementNamed(
         context,
         '/result',
         arguments: ResultArgs(
@@ -78,10 +84,71 @@ class _TestState extends State<Test> {
     }
   }
 
+  void _submitAnswer() {
+    bool isCorrect;
+
+    final int currentWordNumber = _args.testList[_problemNumber - 1][0];
+
+    final String correctAnswer =
+        targetVoca[currentWordNumber][trans(_args.answerForm)].toString();
+
+    if (_args.isMultipleChoice) {
+      if (_selectedOption == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('선지를 선택해주세요.'),
+            duration: Duration(milliseconds: 800),
+          ),
+        );
+        return;
+      }
+
+      if (_selectedOption == _args.testList[_problemNumber - 1][6]) {
+        _correctCount++;
+        isCorrect = true;
+        //정답 유무에 따른 애니메이션 구현해야됨
+      } else {
+        isCorrect = false;
+        _wrongs.add(_args.testList[_problemNumber - 1]);
+      }
+    } else {
+      final String userAnswer = _answerController.text.trim();
+
+      if (userAnswer.toLowerCase() == correctAnswer.trim().toLowerCase()) {
+        _correctCount++;
+        isCorrect = true;
+      } else {
+        isCorrect = false;
+        _wrongs.add(_args.testList[_problemNumber - 1]);
+      }
+    }
+
+    //showDialog써서 화면 가운데에 띄우려했는데 실패. 일단 스낵바로 해놓음. 푸하하!
+    if (isCorrect) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('정답'),
+          backgroundColor: Colors.green,
+          duration: Duration(milliseconds: 500),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('오답. $correctAnswer'),
+          backgroundColor: Colors.red,
+          duration: const Duration(milliseconds: 1500),
+        ),
+      );
+    }
+
+    nextProblem();
+  }
+
   @override
   Widget build(BuildContext context) {
-    _args.testList.forEach((item) => debugPrint(item.toString()));
     final screenWidth = MediaQuery.of(context).size.width;
+    final int currentWordNumber = _args.testList[_problemNumber - 1][0];
 
     return Scaffold(
       body: SafeArea(
@@ -93,18 +160,22 @@ class _TestState extends State<Test> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    '${_args.title}',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  // 문제 부분
-                  ConstrainedBox(
-                    constraints: BoxConstraints(maxHeight: 200),
-                    child: Text(
-                      '$_problemNumber. ${targetVoca[_args.testList[_problemNumber - 1][0]][trans(_args.problemForm)]}',
-                      style: TextStyle(fontSize: 19),
+                    _args.title,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 20),
+
+                  // 문제 부분
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 200),
+                    child: Text(
+                      '$_problemNumber. ${targetVoca[currentWordNumber][trans(_args.problemForm)]}',
+                      style: const TextStyle(fontSize: 19),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
 
                   // 선지 부분
                   //객관식 -> 나중에 elevetedButton으로 바꾸기. 꼭! fuck, 토글은 개별 버튼 디자인이 안돼서 너무 짜침
@@ -113,6 +184,7 @@ class _TestState extends State<Test> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: List.generate(5, (index) {
                         final isSelected = _selectedOption == index;
+
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 4),
                           child: ElevatedButton(
@@ -125,12 +197,10 @@ class _TestState extends State<Test> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              backgroundColor: isSelected
-                                  ? Colors.blue
-                                  : Colors.grey[200],
-                              foregroundColor: isSelected
-                                  ? Colors.white
-                                  : Colors.black87,
+                              backgroundColor:
+                                  isSelected ? Colors.blue : Colors.grey[200],
+                              foregroundColor:
+                                  isSelected ? Colors.white : Colors.black87,
                             ),
                             onPressed: () {
                               setState(() {
@@ -138,8 +208,10 @@ class _TestState extends State<Test> {
                               });
                             },
                             child: Text(
-                              targetVoca[_args.testList[_problemNumber -
-                                  1][index + 1]][trans(_args.answerForm)],
+                              targetVoca[_args.testList[_problemNumber - 1]
+                                      [index + 1]]
+                                  [trans(_args.answerForm)]
+                                  .toString(),
                             ),
                           ),
                         );
@@ -153,19 +225,24 @@ class _TestState extends State<Test> {
                           child: TextField(
                             autofocus: true,
                             controller: _answerController,
-                            decoration: InputDecoration(
+                            decoration: const InputDecoration(
                               border: OutlineInputBorder(),
+                              hintText: '정답 입력',
                             ),
+                            onSubmitted: (_) {
+                              _submitAnswer();
+                            },
                           ),
                         ),
                       ],
                     ),
-                  SizedBox(height: 20),
+
+                  const SizedBox(height: 20),
 
                   // 제출/다음 버튼
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
+                      padding: const EdgeInsets.symmetric(
                         horizontal: 120,
                         vertical: 20,
                       ),
@@ -175,56 +252,8 @@ class _TestState extends State<Test> {
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,
                     ),
-                    onPressed: () {
-                      bool isCorrect;
-                      String correctAnswer =
-                          targetVoca[_args.testList[_problemNumber -
-                              1][0]][trans(_args.answerForm)];
-                      if (_args.isMultipleChoice) {
-                        if (_selectedOption ==
-                            _args.testList[_problemNumber - 1][6]) {
-                          setState(() => _correctCount++);
-                          isCorrect = true;
-                          //정답 유무에 따른 애니메이션 구현해야됨
-                        } else {
-                          isCorrect = false;
-                          _wrongs.add(_args.testList[_problemNumber - 1]);
-                        }
-                      } else {
-                        if (_answerController.text.trim() ==
-                            targetVoca[_args.testList[_problemNumber -
-                                1][0]][trans(_args.answerForm)]) {
-                          setState(() => _correctCount++);
-                          isCorrect = true;
-                        } else {
-                          isCorrect = false;
-                          _wrongs.add(_args.testList[_problemNumber - 1]);
-                        }
-                        _answerController.clear();
-                      }
-
-                      nextProblem();
-
-                      //showDialog써서 화면 가운데에 띄우려했는데 실패. 일단 스낵바로 해놓음. 푸하하!
-                      if (isCorrect) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('정답'),
-                            backgroundColor: Colors.green,
-                            duration: Duration(milliseconds: 500),
-                          ),
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('오답. $correctAnswer'),
-                            backgroundColor: Colors.red,
-                            duration: Duration(milliseconds: 1500),
-                          ),
-                        );
-                      }
-                    },
-                    child: Text('다음'),
+                    onPressed: _submitAnswer,
+                    child: const Text('다음'),
                   ),
                 ],
               ),

@@ -1,230 +1,366 @@
-import 'dart:convert';
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:targetapp/main.dart';
 
-import 'assets/test_domain.dart';
-import 'screens/home.dart';
-import 'screens/result.dart';
-import 'screens/setting.dart';
-import 'screens/target_view.dart';
-import 'screens/test.dart';
-import 'screens/test_setting.dart';
+import 'test.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+class TestSetting extends StatefulWidget {
+const TestSetting({super.key});
 
-  final appState = AppState();
-  await appState.loadData();
-
-  runApp(
-    ChangeNotifierProvider.value(value: appState, child: const TargetApp()),
-  );
-}
-//앱 배포할때 꼭 로컬 DB에 오답노트, 즐겨찾기 저장하게 수정 - 내가해뒀어.
-
-//주관식에서는 답안 양식에 영단어 이외로 선택하면 경고메시지
-class TargetApp extends StatelessWidget {
-  const TargetApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Target App',
-      routes: {
-        '/': (context) => const Home(),
-        '/testsetting': (context) => const TestSetting(),
-        '/setting': (context) => const Setting(),
-        '/test': (context) => const Test(),
-        '/targetview': (context) => const TargetView(),
-        '/result': (context) => const Result(),
-      },
-    );
-  }
+@override
+State<TestSetting> createState() => _TestSettingState();
 }
 
-class AppState extends ChangeNotifier {
-  String problemForm = '한글단어';
-  String answerForm = '영단어';
-  bool isMultipleChoice = true;
-  int problemCount = 10;
-  int grade = 2;
-  List<int> voca =
-      testDomain[2]; //얘는 int로 번호만 저장되어 있음. 근데 내가 testDomain에서 0번 인덱스를 비워놔서 1-based.
-  List<int> favorites = [];
-  Map<int, int> wrong = {}; //틀린 문제 번호와 틀린 횟수 저장
+class _TestSettingState extends State<TestSetting> {
+late String? _dropDownFirst;
+late String? _dropDownLatter;
+late bool _isMultipleChoice;
+late int _selectedCount;
 
-  //즐겨찾기 초기화 함수
-  Future<void> resetFavorites() async {
-    favorites.clear();
-    await saveFavorites();
-    notifyListeners();
-  }
+int _rangeStart = 1;
+int _rangeEnd = 400;
 
-  Future<void> resetWrong() async {
-    wrong.clear();
-    await saveWrong();
-    notifyListeners();
-  }
+final List<int> _counts = [10, 30, 50, 80, 100, 200, 300, 400];
+final List<int> _wordNumbers = List.generate(400, (index) => index + 1);
 
-  //틀린 문제 추가 함수
-  Future<void> addWrong(int wordNumber) async {
-    wrong[wordNumber] = (wrong[wordNumber] ?? 0) + 1;
-    await saveWrong();
-    notifyListeners();
-  }
+@override
+void initState() {
+super.initState();
 
-  //설정 저장 함수
-  Future<void> saveSettings({
-    required int? grade,
-    required String? problemForm,
-    required String? answerForm,
-    required bool isMultipleChoice,
-    required int problemCount,
-  }) async {
-    this.grade = grade ?? this.grade;
+final appState = Provider.of<AppState>(context, listen: false);
 
-    if (this.grade < 0 || this.grade >= testDomain.length) {
-      this.grade = 2;
-    }
+_dropDownFirst = appState.problemForm;
+_dropDownLatter = appState.answerForm;
+_isMultipleChoice = appState.isMultipleChoice;
+_selectedCount = appState.problemCount;
+}
 
-    voca = testDomain[this.grade];
+void _showError(String message) {
+showDialog(
+context: context,
+builder: (context) => AlertDialog(
+title: const Text(
+'오류',
+style: TextStyle(color: Colors.red),
+),
+content: Text(message),
+actions: [
+TextButton(
+onPressed: () => Navigator.pop(context),
+child: const Text('확인'),
+),
+ ],
+),
+);
+}
 
-    this.problemForm = problemForm ?? this.problemForm;
-    this.answerForm = answerForm ?? this.answerForm;
-    this.isMultipleChoice = isMultipleChoice;
-    this.problemCount = problemCount;
+List<int> _makeRangedVoca(List appStateVoca) {
+return appStateVoca
+.whereType<int>()
+.where((wordNumber) {
+return wordNumber >= _rangeStart && wordNumber <= _rangeEnd;
+})
+.toList();
+}
 
-    await saveAppSettings();
-    notifyListeners();
-  }
+@override
+Widget build(BuildContext context) {
+final outlineColor = Theme.of(context).colorScheme.outline;
 
-  Future<void> loadData() async {
-    //즐겨찾기 오답노트 불러오기
-    final prefs = await SharedPreferences.getInstance();
+return Scaffold(
+appBar: AppBar(
+title: const Text('시험지 설정'),
+),
+body: SafeArea(
+child: SingleChildScrollView(
+child: Center(
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.center,
+children: [
+const SizedBox(height: 10),
 
-    final favoriteData = prefs.getStringList('favorites');
-    if (favoriteData != null) {
-      favorites = favoriteData.map(int.tryParse).whereType<int>().toList();
-    }
+const Text(
+'시험 유형 설정',
+style: TextStyle(fontSize: 24),
+),
 
-    final wrongData = prefs.getString('wrong');
-    if (wrongData != null) {
-      try {
-        final decoded = jsonDecode(wrongData) as Map<String, dynamic>;
+const SizedBox(height: 10),
 
-        wrong = decoded.map(
-          (key, value) => MapEntry(int.parse(key), (value as num).toInt()),
-        );
-      } catch (_) {
-        wrong = {};
-        await saveWrong();
-      }
-    }
+Row(
+mainAxisAlignment: MainAxisAlignment.center,
+children: [
+const Text('문제:'),
+const SizedBox(width: 10),
 
-    //설정 불러오기
-    problemForm = prefs.getString('problemForm') ?? problemForm;
-    answerForm = prefs.getString('answerForm') ?? answerForm;
-    isMultipleChoice = prefs.getBool('isMultipleChoice') ?? isMultipleChoice;
-    problemCount = prefs.getInt('problemCount') ?? problemCount;
-    grade = prefs.getInt('grade') ?? grade;
+Container(
+width: 110,
+padding: const EdgeInsets.symmetric(horizontal: 8),
+decoration: BoxDecoration(
+border: Border.all(
+color: outlineColor,
+width: 1,
+),
+borderRadius: BorderRadius.circular(8),
+),
+child: DropdownButtonFormField<String>(
+initialValue: _dropDownFirst,
+items: ['한글단어', '영단어', '영영풀이']
+.map(
+(e) => DropdownMenuItem<String>(
+value: e,
+child: Text(e),
+),
+)
+.toList(),
+onChanged: (value) {
+setState(() => _dropDownFirst = value);
+},
+),
+),
 
-    if (grade < 0 || grade >= testDomain.length) {
-      grade = 2;
-      await saveAppSettings();
-    }
+const SizedBox(width: 15),
+const Icon(Icons.arrow_forward_ios, size: 16),
+const SizedBox(width: 15),
 
-    //저장된 학년에 맞게 시험 범위 다시 설정
-    voca = testDomain[grade];
+const Text('답안:'),
+const SizedBox(width: 10),
 
-    notifyListeners();
-  }
+Container(
+width: 110,
+padding: const EdgeInsets.symmetric(horizontal: 8),
+decoration: BoxDecoration(
+border: Border.all(
+color: outlineColor,
+width: 1,
+),
+borderRadius: BorderRadius.circular(8),
+),
+child: DropdownButtonFormField<String>(
+initialValue: _dropDownLatter,
+items: ['한글단어', '영단어']
+.map(
+(e) => DropdownMenuItem<String>(
+value: e,
+child: Text(e),
+),
+)
+.toList(),
+onChanged: (value) {
+setState(() => _dropDownLatter = value);
+},
+),
+),
+],
+),
 
-  Future<void> saveFavorites() async {
-    final prefs = await SharedPreferences.getInstance();
+const SizedBox(height: 10),
 
-    await prefs.setStringList(
-      'favorites',
-      favorites.map((e) => e.toString()).toList(),
-    );
-  }
+ToggleButtons(
+borderRadius: BorderRadius.circular(20),
+isSelected: [_isMultipleChoice, !_isMultipleChoice],
+onPressed: (index) {
+setState(() => _isMultipleChoice = index == 0);
+},
+children: ['객관식', '주관식']
+.map(
+(e) => Padding(
+padding: const EdgeInsets.symmetric(horizontal: 12),
+child: Text(e),
+),
+)
+.toList(),
+),
 
-  Future<void> saveWrong() async {
-    final prefs = await SharedPreferences.getInstance();
+const SizedBox(height: 40),
 
-    final wrongToSave = wrong.map(
-      (key, value) => MapEntry(key.toString(), value),
-    );
+const Text(
+'번호 범위 설정',
+style: TextStyle(fontSize: 24),
+),
 
-    await prefs.setString('wrong', jsonEncode(wrongToSave));
-  }
+const SizedBox(height: 10),
 
-  Future<void> saveAppSettings() async {
-    final prefs = await SharedPreferences.getInstance();
+const Text(
+'선택한 번호 범위 안에서만 문제가 출제돼요.',
+style: TextStyle(fontSize: 13),
+),
 
-    await prefs.setString('problemForm', problemForm);
-    await prefs.setString('answerForm', answerForm);
-    await prefs.setBool('isMultipleChoice', isMultipleChoice);
-    await prefs.setInt('problemCount', problemCount);
-    await prefs.setInt('grade', grade);
-  }
+const SizedBox(height: 10),
 
-  //문제 만들기
-  List<List<int>> makeTest({
-    required int problemCount,
-    required bool isMultipleChoice,
-    required List<int> testDomain,
-  }) {
-    final shuffled = List<int>.from(testDomain)..shuffle();
+Row(
+mainAxisAlignment: MainAxisAlignment.center,
+children: [
+Container(
+width: 95,
+padding: const EdgeInsets.symmetric(horizontal: 8),
+decoration: BoxDecoration(
+border: Border.all(
+color: outlineColor,
+width: 1,
+),
+borderRadius: BorderRadius.circular(8),
+),
+child: DropdownButtonFormField<int>(
+initialValue: _rangeStart,
+items: _wordNumbers
+.map(
+(e) => DropdownMenuItem<int>(
+value: e,
+child: Text('$`e번'),
+),
+)
+.toList(),
+onChanged: (value) {
+if (value == null) return;
+setState(() => _rangeStart = value);
+},
+),
+),
 
-    final int realProblemCount = problemCount > shuffled.length
-        ? shuffled.length
-        : problemCount;
+const SizedBox(width: 12),
 
-    if (!isMultipleChoice) {
-      //[문제번호]
-      return shuffled.take(realProblemCount).map((e) => [e]).toList();
-    } else {
-      //[문제번호, 선지1~5, 정답번호]
-      final List<List<int>> problems = [];
+const Text(
+'~',
+style: TextStyle(fontSize: 24),
+),
 
-      for (int i = 0; i < realProblemCount; i++) {
-        final int problemNumber = shuffled[i];
+const SizedBox(width: 12),
 
-        final List<int> options = [problemNumber];
+Container(
+width: 95,
+padding: const EdgeInsets.symmetric(horizontal: 8),
+decoration: BoxDecoration(
+border: Border.all(
+color: outlineColor,
+width: 1,
+),
+borderRadius: BorderRadius.circular(8),
+),
+child: DropdownButtonFormField<int>(
+initialValue: _rangeEnd,
+items: _wordNumbers
+.map(
+(e) => DropdownMenuItem<int>(
+value: e,
+child: Text('`$e번'),
+),
+)
+.toList(),
+onChanged: (value) {
+if (value == null) return;
+setState(() => _rangeEnd = value);
+},
+),
+),
+],
+),
 
-        while (options.length < 5) {
-          final int option = voca[Random().nextInt(voca.length)];
+const SizedBox(height: 40),
 
-          if (!options.contains(option)) {
-            options.add(option);
-          }
-        }
+const Text(
+'문제 수 설정',
+style: TextStyle(fontSize: 24),
+),
 
-        options.shuffle();
+const SizedBox(height: 10),
 
-        problems.add([
-          problemNumber,
-          ...options,
-          options.indexOf(problemNumber),
-        ]);
-      }
+Column(
+children: [
+ToggleButtons(
+constraints: const BoxConstraints(
+maxWidth: 80,
+minWidth: 80,
+minHeight: 40,
+),
+isSelected: _counts
+.sublist(0, 4)
+.map((e) => e == _selectedCount)
+.toList(),
+onPressed: (index) {
+setState(() => _selectedCount = _counts[index]);
+},
+borderRadius: BorderRadius.circular(8),
+children:
+_counts.sublist(0, 4).map((e) => Text(' e개')).toList(),
+),
+],
+),
 
-      return problems;
-    }
-  }
+const SizedBox(height: 40),
 
-  Future<void> toggleFavorite(int wordNumber) async {
-    if (favorites.contains(wordNumber)) {
-      favorites.remove(wordNumber);
-    } else {
-      favorites.add(wordNumber);
-    }
+ElevatedButton(
+style: ElevatedButton.styleFrom(
+backgroundColor: Colors.yellow,
+foregroundColor: Colors.black,
+textStyle: const TextStyle(fontSize: 18),
+fixedSize: const Size(300, 50),
+shape: RoundedRectangleBorder(
+borderRadius: BorderRadius.circular(8),
+),
+),
+onPressed: () {
+if (_dropDownFirst == _dropDownLatter) {
+_showError('문제 유형과 선지가 같을 수 없어요.');
+return;
+}
 
-    await saveFavorites();
-    notifyListeners();
-  }
+if (!_isMultipleChoice && _dropDownLatter != '영단어') {
+_showError('주관식은 답안 유형이 영단어여야 해요.');
+return;
+}
+
+if (_rangeStart <= 0 ||
+_rangeStart >= 401 ||
+_rangeEnd <= 0 ||
+_rangeEnd >= 401) {
+_showError('번호 범위는 1번부터 400번까지만 선택할 수 있어요.');
+return;
+}
+
+if (_rangeStart >= _rangeEnd) {
+_showError('시작 번호는 끝 번호보다 작아야 해요.');
+return;
+}
+
+final appState = Provider.of<AppState>(
+context,
+listen: false,
+);
+
+final rangedVoca = _makeRangedVoca(appState.voca);
+
+if (rangedVoca.isEmpty) {
+_showError('선택한 범위에 출제할 단어가 없어요.');
+return;
+}
+
+Navigator.pushNamed(
+context,
+'/test',
+arguments: TestArgs(
+title: '시험',
+problemForm: _dropDownFirst!,
+answerForm: _dropDownLatter!,
+isMultipleChoice: _isMultipleChoice,
+problemCount: _selectedCount,
+testNumber: 0,
+testList: appState.makeTest(
+problemCount: _selectedCount,
+isMultipleChoice: _isMultipleChoice,
+testDomain: rangedVoca,
+),
+),
+);
+},
+child: const Text('시작'),
+),
+
+const SizedBox(height: 30),
+],
+),
+),
+),
+),
+);
+}
 }

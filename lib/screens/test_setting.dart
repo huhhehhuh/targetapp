@@ -55,9 +55,16 @@ class _TestSettingState extends State<TestSetting> {
   }
 
   List<int> _makeRangedVoca(List<int> appStateVoca) {
-    return appStateVoca.where((wordNumber) {
-      return wordNumber >= _rangeStart && wordNumber <= _rangeEnd;
-    }).toList();
+    final int startIndex = _rangeStart - 1;
+    final int endIndexExclusive = _rangeEnd;
+
+    if (startIndex < 0 ||
+        endIndexExclusive > appStateVoca.length ||
+        startIndex >= endIndexExclusive) {
+      return [];
+    }
+
+    return appStateVoca.sublist(startIndex, endIndexExclusive);
   }
 
   @override
@@ -171,14 +178,14 @@ class _TestSettingState extends State<TestSetting> {
                 const SizedBox(height: 40),
 
                 const Text(
-                  '번호 범위 설정',
+                  '출제 범위 설정',
                   style: TextStyle(fontSize: 24),
                 ),
 
                 const SizedBox(height: 10),
 
                 const Text(
-                  '선택한 번호 범위 안에서만 문제가 출제돼요.',
+                  '현재 단어장 순서 기준으로 범위를 선택해요.',
                   style: TextStyle(fontSize: 13),
                 ),
 
@@ -327,7 +334,7 @@ class _TestSettingState extends State<TestSetting> {
                         _rangeStart >= 401 ||
                         _rangeEnd <= 0 ||
                         _rangeEnd >= 401) {
-                      _showError('번호 범위는 1번부터 400번까지만 선택할 수 있어요.');
+                      _showError('범위는 1번부터 400번까지만 선택할 수 있어요.');
                       return;
                     }
 

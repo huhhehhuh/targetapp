@@ -1,12 +1,4 @@
-// lib/screens/target_view.dart
-//내게는 고통밖에 없습니다.
-//그것 말고는 아무것도 바라지 않습니다.
-//고통은 내게 충실했고 그것은 지금도 변함이 없습니다.
-//내 영혼이 심연의 바닥을 헤맬 때에도
-//고통은 늘 곁에 앉아 나를 지켜주었으니 어떻게 고통을 원망하겠습니까.
-
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:provider/provider.dart';
 
 import '../assets/target_voca_list.dart';
@@ -20,7 +12,7 @@ class TargetView extends StatefulWidget {
 }
 
 class _TargetViewState extends State<TargetView> {
-  String _searchKeyword = ''; //검색 기능 추가해봄, 일단 영어 검색만 가능함
+  String _searchKeyword = '';
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +34,7 @@ class _TargetViewState extends State<TargetView> {
         final wrongEntries = appState.wrong.entries.toList()
           ..sort((a, b) => b.value.compareTo(a.value));
 
-        wordList = wrongEntries.map((entry) => entry.key).toList();
+        wordList = wrongEntries.map<int>((entry) => entry.key).toList();
         title = '오답노트';
         break;
 
@@ -55,7 +47,6 @@ class _TargetViewState extends State<TargetView> {
 
     final List<int> filteredWordList = wordList.where((wordNumber) {
       final wordData = targetVoca[wordNumber];
-
       final String word = wordData[2].toString().toLowerCase();
       final String keyword = _searchKeyword.trim().toLowerCase();
 
@@ -70,13 +61,38 @@ class _TargetViewState extends State<TargetView> {
         ? 1
         : appState.wrong.values.reduce((a, b) => a > b ? a : b);
 
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final Color baseCardColor =
+        isDark ? const Color(0xFF1E1E1E) : Colors.white;
+
+    final Color primaryTextColor =
+        isDark ? Colors.white : const Color(0xFF222222);
+
+    final Color secondaryTextColor =
+        isDark ? Colors.white70 : const Color(0xFF666666);
+
+    final Color mutedTextColor =
+        isDark ? Colors.white60 : const Color(0xFF888888);
+
+    final Color searchFillColor =
+        isDark ? const Color(0xFF1A1A1A) : Colors.white;
+
+    final Color wrongCountTextColor =
+        isDark ? const Color(0xFFFF8A80) : Colors.redAccent;
+
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(
+        title: Text(title),
+      ),
       body: wordList.isEmpty
-          ? const Center(
+          ? Center(
               child: Text(
                 '데이터가 없습니다',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: mutedTextColor,
+                ),
               ),
             )
           : Column(
@@ -84,10 +100,17 @@ class _TargetViewState extends State<TargetView> {
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: TextField(
-                    decoration: const InputDecoration(
+                    style: TextStyle(color: primaryTextColor),
+                    decoration: InputDecoration(
                       hintText: '영어 단어 검색',
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(),
+                      hintStyle: TextStyle(color: secondaryTextColor),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: secondaryTextColor,
+                      ),
+                      filled: true,
+                      fillColor: searchFillColor,
+                      border: const OutlineInputBorder(),
                     ),
                     onChanged: (value) {
                       setState(() {
@@ -96,40 +119,52 @@ class _TargetViewState extends State<TargetView> {
                     },
                   ),
                 ),
+
                 Expanded(
                   child: filteredWordList.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Text(
                             '검색 결과가 없습니다',
-                            style: TextStyle(fontSize: 16, color: Colors.grey),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: mutedTextColor,
+                            ),
                           ),
                         )
                       : ListView.builder(
                           itemCount: filteredWordList.length,
                           itemBuilder: (context, index) {
                             final int wordNumber = filteredWordList[index];
-
                             final wordData = targetVoca[wordNumber];
 
                             final String level = wordData[1].toString();
                             final String word = wordData[2].toString();
-                            final String koreanMeaning = wordData[3].toString();
-                            final String englishMeaning = wordData[4]
-                                .toString();
+                            final String koreanMeaning =
+                                wordData[3].toString();
+                            final String englishMeaning =
+                                wordData[4].toString();
 
                             final int wrongCount =
                                 appState.wrong[wordNumber] ?? 0;
+
                             final double wrongRatio =
                                 wrongCount / maxWrongCount;
 
                             final Color cardColor =
                                 mode == 'wrongs' && wrongCount > 0
-                                ? Color.lerp(
-                                    const Color(0xFFE8F5E9),
-                                    const Color(0xFFFFEBEE),
-                                    wrongRatio,
-                                  )!
-                                : Colors.white;
+                                    ? Color.lerp(
+                                        isDark
+                                            ? const Color(0xFF1F3B24)
+                                            : const Color(0xFFE8F5E9),
+                                        isDark
+                                            ? const Color(0xFF4A1F24)
+                                            : const Color(0xFFFFEBEE),
+                                        wrongRatio,
+                                      )!
+                                    : baseCardColor;
+
+                            final bool isFavorite =
+                                appState.favorites.contains(wordNumber);
 
                             return Card(
                               color: cardColor,
@@ -153,23 +188,25 @@ class _TargetViewState extends State<TargetView> {
                                         children: [
                                           Text(
                                             '${index + 1}',
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.bold,
-                                              color: Colors.grey,
+                                              color: mutedTextColor,
                                             ),
                                           ),
                                           Text(
                                             level,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 10,
-                                              color: Colors.grey,
+                                              color: mutedTextColor,
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
+
                                     const SizedBox(width: 12),
+
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
@@ -180,19 +217,21 @@ class _TargetViewState extends State<TargetView> {
                                               Expanded(
                                                 child: Text(
                                                   word,
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 18,
                                                     fontWeight: FontWeight.bold,
+                                                    color: primaryTextColor,
                                                   ),
                                                 ),
                                               ),
                                               IconButton(
                                                 icon: Icon(
-                                                  appState.favorites.contains(
-                                                        wordNumber,
-                                                      )
+                                                  isFavorite
                                                       ? Icons.star
                                                       : Icons.star_border,
+                                                  color: isFavorite
+                                                      ? Colors.amber
+                                                      : secondaryTextColor,
                                                 ),
                                                 onPressed: () {
                                                   appState.toggleFavorite(
@@ -202,33 +241,39 @@ class _TargetViewState extends State<TargetView> {
                                               ),
                                             ],
                                           ),
+
                                           const SizedBox(height: 4),
+
                                           Text(
                                             koreanMeaning,
                                             softWrap: true,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 14,
                                               height: 1.45,
+                                              color: primaryTextColor,
                                             ),
                                           ),
+
                                           const SizedBox(height: 6),
+
                                           Text(
                                             englishMeaning,
                                             softWrap: true,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 13,
                                               height: 1.35,
-                                              color: Colors.grey,
+                                              color: secondaryTextColor,
                                             ),
                                           ),
+
                                           if (mode == 'wrongs') ...[
                                             const SizedBox(height: 6),
                                             Text(
                                               '$wrongCount회 틀림',
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.w600,
-                                                color: Colors.redAccent,
+                                                color: wrongCountTextColor,
                                               ),
                                             ),
                                           ],
@@ -246,12 +291,4 @@ class _TargetViewState extends State<TargetView> {
             ),
     );
   }
-}
-
-@Preview()
-Widget targetViewPreview() {
-  return ChangeNotifierProvider(
-    create: (_) => AppState(),
-    child: const MaterialApp(home: TargetView()),
-  );
 }

@@ -1,366 +1,276 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:targetapp/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'test.dart';
+import 'assets/test_domain.dart';
+import 'screens/home.dart';
+import 'screens/result.dart';
+import 'screens/setting.dart';
+import 'screens/target_view.dart';
+import 'screens/test.dart';
+import 'screens/test_setting.dart';
 
-class TestSetting extends StatefulWidget {
-const TestSetting({super.key});
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
-@override
-State<TestSetting> createState() => _TestSettingState();
+  final appState = AppState();
+  await appState.loadData();
+
+  runApp(
+    ChangeNotifierProvider.value(
+      value: appState,
+      child: const TargetApp(),
+    ),
+  );
 }
 
-class _TestSettingState extends State<TestSetting> {
-late String? _dropDownFirst;
-late String? _dropDownLatter;
-late bool _isMultipleChoice;
-late int _selectedCount;
+class TargetApp extends StatelessWidget {
+  const TargetApp({super.key});
 
-int _rangeStart = 1;
-int _rangeEnd = 400;
-
-final List<int> _counts = [10, 30, 50, 80, 100, 200, 300, 400];
-final List<int> _wordNumbers = List.generate(400, (index) => index + 1);
-
-@override
-void initState() {
-super.initState();
-
-final appState = Provider.of<AppState>(context, listen: false);
-
-_dropDownFirst = appState.problemForm;
-_dropDownLatter = appState.answerForm;
-_isMultipleChoice = appState.isMultipleChoice;
-_selectedCount = appState.problemCount;
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AppState>(
+      builder: (context, appState, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Target App',
+          themeMode: appState.themeMode,
+          theme: ThemeData(
+            brightness: Brightness.light,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.green,
+              brightness: Brightness.light,
+            ),
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData(
+            brightness: Brightness.dark,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.green,
+              brightness: Brightness.dark,
+            ),
+            useMaterial3: true,
+          ),
+          routes: {
+            '/': (context) => const Home(),
+            '/testsetting': (context) => const TestSetting(),
+            '/setting': (context) => const Setting(),
+            '/test': (context) => const Test(),
+            '/targetview': (context) => const TargetView(),
+            '/result': (context) => const Result(),
+          },
+        );
+      },
+    );
+  }
 }
 
-void _showError(String message) {
-showDialog(
-context: context,
-builder: (context) => AlertDialog(
-title: const Text(
-'오류',
-style: TextStyle(color: Colors.red),
-),
-content: Text(message),
-actions: [
-TextButton(
-onPressed: () => Navigator.pop(context),
-child: const Text('확인'),
-),
- ],
-),
-);
-}
+class AppState extends ChangeNotifier {
+  String problemForm = '한글단어';
+  String answerForm = '영단어';
+  bool isMultipleChoice = true;
+  int problemCount = 10;
+  int grade = 2;
+  String themeModeName = 'system';
 
-List<int> _makeRangedVoca(List appStateVoca) {
-return appStateVoca
-.whereType<int>()
-.where((wordNumber) {
-return wordNumber >= _rangeStart && wordNumber <= _rangeEnd;
-})
-.toList();
-}
+  List<int> voca = List<int>.from(testDomain[2]);
 
-@override
-Widget build(BuildContext context) {
-final outlineColor = Theme.of(context).colorScheme.outline;
+  List<int> favorites = [];
+  Map<int, int> wrong = {};
 
-return Scaffold(
-appBar: AppBar(
-title: const Text('시험지 설정'),
-),
-body: SafeArea(
-child: SingleChildScrollView(
-child: Center(
-child: Column(
-crossAxisAlignment: CrossAxisAlignment.center,
-children: [
-const SizedBox(height: 10),
+  ThemeMode get themeMode {
+    switch (themeModeName) {
+      case 'light':
+        return ThemeMode.light;
+      case 'dark':
+        return ThemeMode.dark;
+      case 'system':
+      default:
+        return ThemeMode.system;
+    }
+  }
 
-const Text(
-'시험 유형 설정',
-style: TextStyle(fontSize: 24),
-),
+  Future<void> resetFavorites() async {
+    favorites.clear();
+    await saveFavorites();
+    notifyListeners();
+  }
 
-const SizedBox(height: 10),
+  Future<void> resetWrong() async {
+    wrong.clear();
+    await saveWrong();
+    notifyListeners();
+  }
 
-Row(
-mainAxisAlignment: MainAxisAlignment.center,
-children: [
-const Text('문제:'),
-const SizedBox(width: 10),
+  Future<void> addWrong(int wordNumber) async {
+    wrong[wordNumber] = (wrong[wordNumber] ?? 0) + 1;
+    await saveWrong();
+    notifyListeners();
+  }
 
-Container(
-width: 110,
-padding: const EdgeInsets.symmetric(horizontal: 8),
-decoration: BoxDecoration(
-border: Border.all(
-color: outlineColor,
-width: 1,
-),
-borderRadius: BorderRadius.circular(8),
-),
-child: DropdownButtonFormField<String>(
-initialValue: _dropDownFirst,
-items: ['한글단어', '영단어', '영영풀이']
-.map(
-(e) => DropdownMenuItem<String>(
-value: e,
-child: Text(e),
-),
-)
-.toList(),
-onChanged: (value) {
-setState(() => _dropDownFirst = value);
-},
-),
-),
+  Future<void> saveSettings({
+    required int? grade,
+    required String? problemForm,
+    required String? answerForm,
+    required bool isMultipleChoice,
+    required int problemCount,
+    String? themeModeName,
+  }) async {
+    this.grade = grade ?? this.grade;
 
-const SizedBox(width: 15),
-const Icon(Icons.arrow_forward_ios, size: 16),
-const SizedBox(width: 15),
+    if (this.grade < 1 || this.grade > 3 || this.grade >= testDomain.length) {
+      this.grade = 2;
+    }
 
-const Text('답안:'),
-const SizedBox(width: 10),
+    voca = List<int>.from(testDomain[this.grade]);
 
-Container(
-width: 110,
-padding: const EdgeInsets.symmetric(horizontal: 8),
-decoration: BoxDecoration(
-border: Border.all(
-color: outlineColor,
-width: 1,
-),
-borderRadius: BorderRadius.circular(8),
-),
-child: DropdownButtonFormField<String>(
-initialValue: _dropDownLatter,
-items: ['한글단어', '영단어']
-.map(
-(e) => DropdownMenuItem<String>(
-value: e,
-child: Text(e),
-),
-)
-.toList(),
-onChanged: (value) {
-setState(() => _dropDownLatter = value);
-},
-),
-),
-],
-),
+    this.problemForm = problemForm ?? this.problemForm;
+    this.answerForm = answerForm ?? this.answerForm;
+    this.isMultipleChoice = isMultipleChoice;
+    this.problemCount = problemCount;
 
-const SizedBox(height: 10),
+    if (themeModeName != null) {
+      this.themeModeName = themeModeName;
+    }
 
-ToggleButtons(
-borderRadius: BorderRadius.circular(20),
-isSelected: [_isMultipleChoice, !_isMultipleChoice],
-onPressed: (index) {
-setState(() => _isMultipleChoice = index == 0);
-},
-children: ['객관식', '주관식']
-.map(
-(e) => Padding(
-padding: const EdgeInsets.symmetric(horizontal: 12),
-child: Text(e),
-),
-)
-.toList(),
-),
+    if (!['system', 'light', 'dark'].contains(this.themeModeName)) {
+      this.themeModeName = 'system';
+    }
 
-const SizedBox(height: 40),
+    await saveAppSettings();
+    notifyListeners();
+  }
 
-const Text(
-'번호 범위 설정',
-style: TextStyle(fontSize: 24),
-),
+  Future<void> loadData() async {
+    final prefs = await SharedPreferences.getInstance();
 
-const SizedBox(height: 10),
+    final favoriteData = prefs.getStringList('favorites');
 
-const Text(
-'선택한 번호 범위 안에서만 문제가 출제돼요.',
-style: TextStyle(fontSize: 13),
-),
+    if (favoriteData != null) {
+      favorites = favoriteData.map(int.tryParse).whereType<int>().toList();
+    }
 
-const SizedBox(height: 10),
+    final wrongData = prefs.getString('wrong');
 
-Row(
-mainAxisAlignment: MainAxisAlignment.center,
-children: [
-Container(
-width: 95,
-padding: const EdgeInsets.symmetric(horizontal: 8),
-decoration: BoxDecoration(
-border: Border.all(
-color: outlineColor,
-width: 1,
-),
-borderRadius: BorderRadius.circular(8),
-),
-child: DropdownButtonFormField<int>(
-initialValue: _rangeStart,
-items: _wordNumbers
-.map(
-(e) => DropdownMenuItem<int>(
-value: e,
-child: Text('$`e번'),
-),
-)
-.toList(),
-onChanged: (value) {
-if (value == null) return;
-setState(() => _rangeStart = value);
-},
-),
-),
+    if (wrongData != null) {
+      try {
+        final decoded = jsonDecode(wrongData) as Map<String, dynamic>;
 
-const SizedBox(width: 12),
+        wrong = decoded.map(
+          (key, value) => MapEntry(
+            int.parse(key),
+            (value as num).toInt(),
+          ),
+        );
+      } catch (_) {
+        wrong = {};
+        await saveWrong();
+      }
+    }
 
-const Text(
-'~',
-style: TextStyle(fontSize: 24),
-),
+    problemForm = prefs.getString('problemForm') ?? problemForm;
+    answerForm = prefs.getString('answerForm') ?? answerForm;
+    isMultipleChoice = prefs.getBool('isMultipleChoice') ?? isMultipleChoice;
+    problemCount = prefs.getInt('problemCount') ?? problemCount;
+    grade = prefs.getInt('grade') ?? grade;
+    themeModeName = prefs.getString('themeModeName') ?? themeModeName;
 
-const SizedBox(width: 12),
+    if (grade < 1 || grade > 3 || grade >= testDomain.length) {
+      grade = 2;
+      await saveAppSettings();
+    }
 
-Container(
-width: 95,
-padding: const EdgeInsets.symmetric(horizontal: 8),
-decoration: BoxDecoration(
-border: Border.all(
-color: outlineColor,
-width: 1,
-),
-borderRadius: BorderRadius.circular(8),
-),
-child: DropdownButtonFormField<int>(
-initialValue: _rangeEnd,
-items: _wordNumbers
-.map(
-(e) => DropdownMenuItem<int>(
-value: e,
-child: Text('`$e번'),
-),
-)
-.toList(),
-onChanged: (value) {
-if (value == null) return;
-setState(() => _rangeEnd = value);
-},
-),
-),
-],
-),
+    if (!['system', 'light', 'dark'].contains(themeModeName)) {
+      themeModeName = 'system';
+      await saveAppSettings();
+    }
 
-const SizedBox(height: 40),
+    voca = List<int>.from(testDomain[grade]);
 
-const Text(
-'문제 수 설정',
-style: TextStyle(fontSize: 24),
-),
+    notifyListeners();
+  }
 
-const SizedBox(height: 10),
+  Future<void> saveFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
 
-Column(
-children: [
-ToggleButtons(
-constraints: const BoxConstraints(
-maxWidth: 80,
-minWidth: 80,
-minHeight: 40,
-),
-isSelected: _counts
-.sublist(0, 4)
-.map((e) => e == _selectedCount)
-.toList(),
-onPressed: (index) {
-setState(() => _selectedCount = _counts[index]);
-},
-borderRadius: BorderRadius.circular(8),
-children:
-_counts.sublist(0, 4).map((e) => Text(' e개')).toList(),
-),
-],
-),
+    await prefs.setStringList(
+      'favorites',
+      favorites.map((e) => e.toString()).toList(),
+    );
+  }
 
-const SizedBox(height: 40),
+  Future<void> saveWrong() async {
+    final prefs = await SharedPreferences.getInstance();
 
-ElevatedButton(
-style: ElevatedButton.styleFrom(
-backgroundColor: Colors.yellow,
-foregroundColor: Colors.black,
-textStyle: const TextStyle(fontSize: 18),
-fixedSize: const Size(300, 50),
-shape: RoundedRectangleBorder(
-borderRadius: BorderRadius.circular(8),
-),
-),
-onPressed: () {
-if (_dropDownFirst == _dropDownLatter) {
-_showError('문제 유형과 선지가 같을 수 없어요.');
-return;
-}
+    final wrongToSave = wrong.map(
+      (key, value) => MapEntry(key.toString(), value),
+    );
 
-if (!_isMultipleChoice && _dropDownLatter != '영단어') {
-_showError('주관식은 답안 유형이 영단어여야 해요.');
-return;
-}
+    await prefs.setString('wrong', jsonEncode(wrongToSave));
+  }
 
-if (_rangeStart <= 0 ||
-_rangeStart >= 401 ||
-_rangeEnd <= 0 ||
-_rangeEnd >= 401) {
-_showError('번호 범위는 1번부터 400번까지만 선택할 수 있어요.');
-return;
-}
+  Future<void> saveAppSettings() async {
+    final prefs = await SharedPreferences.getInstance();
 
-if (_rangeStart >= _rangeEnd) {
-_showError('시작 번호는 끝 번호보다 작아야 해요.');
-return;
-}
+    await prefs.setString('problemForm', problemForm);
+    await prefs.setString('answerForm', answerForm);
+    await prefs.setBool('isMultipleChoice', isMultipleChoice);
+    await prefs.setInt('problemCount', problemCount);
+    await prefs.setInt('grade', grade);
+    await prefs.setString('themeModeName', themeModeName);
+  }
 
-final appState = Provider.of<AppState>(
-context,
-listen: false,
-);
+  List<List<int>> makeTest({
+    required int problemCount,
+    required bool isMultipleChoice,
+    required List<int> testDomain,
+  }) {
+    final shuffled = List<int>.from(testDomain)..shuffle();
+    final realProblemCount =
+        problemCount > shuffled.length ? shuffled.length : problemCount;
 
-final rangedVoca = _makeRangedVoca(appState.voca);
+    if (!isMultipleChoice) {
+      return shuffled.take(realProblemCount).map((e) => [e]).toList();
+    }
 
-if (rangedVoca.isEmpty) {
-_showError('선택한 범위에 출제할 단어가 없어요.');
-return;
-}
+    final random = Random();
+    final List<List<int>> problems = [];
 
-Navigator.pushNamed(
-context,
-'/test',
-arguments: TestArgs(
-title: '시험',
-problemForm: _dropDownFirst!,
-answerForm: _dropDownLatter!,
-isMultipleChoice: _isMultipleChoice,
-problemCount: _selectedCount,
-testNumber: 0,
-testList: appState.makeTest(
-problemCount: _selectedCount,
-isMultipleChoice: _isMultipleChoice,
-testDomain: rangedVoca,
-),
-),
-);
-},
-child: const Text('시작'),
-),
+    for (int i = 0; i < realProblemCount; i++) {
+      final int problemNumber = shuffled[i];
+      final List<int> options = [problemNumber];
 
-const SizedBox(height: 30),
-],
-),
-),
-),
-),
-);
-}
+      while (options.length < 5) {
+        final int option = voca[random.nextInt(voca.length)];
+
+        if (!options.contains(option)) {
+          options.add(option);
+        }
+      }
+
+      options.shuffle();
+
+      problems.add([
+        problemNumber,
+        ...options,
+        options.indexOf(problemNumber),
+      ]);
+    }
+
+    return problems;
+  }
+
+  Future<void> toggleFavorite(int wordNumber) async {
+    if (favorites.contains(wordNumber)) {
+      favorites.remove(wordNumber);
+    } else {
+      favorites.add(wordNumber);
+    }
+
+    await saveFavorites();
+    notifyListeners();
+  }
 }
